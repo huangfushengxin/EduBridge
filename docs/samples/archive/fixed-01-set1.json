@@ -1,0 +1,215 @@
+{
+  "sample_set_version": 1,
+  "source_label": "自行设计测试样例（非真实学生数据）；学生作答为人工设计的典型错误示范",
+  "review_status": "pending_human_review",
+  "review_note": "本文件全部参考答案与错因解释由开发助手于2026-11-17设计，未经负责人人工复核；不得写成负责人已确认。未调用任何付费模型。复核清单见 docs/review/stage-01-review-checklist.md。",
+  "regression_set_status": "candidate_pending_content_review",
+  "version_policy": "六例为固定回归测试候选集，内容审核通过后冻结；保留题目版本，不得为让测试通过而修改参考答案；确需修订须记录原因、升 sample_set_version、旧版留档并重新人工复核。",
+  "samples": [
+    {
+      "sample_id": "FIX-SET-01",
+      "knowledge_point": "sets",
+      "title": "含参子集漏空集",
+      "stem": "已知集合 A={1}，B={x | ax=1}。若 B⊆A，求实数 a 的取值集合。",
+      "conditions": ["B 由含参方程 ax=1 定义", "B⊆A（允许 B=∅）"],
+      "student_steps": [
+        { "step_index": 0, "content": "由 ax=1 得 x=1/a" },
+        { "step_index": 1, "content": "B⊆A，所以 1/a=1，得 a=1" },
+        { "step_index": 2, "content": "答：a 的取值集合为 {1}" }
+      ],
+      "teacher_mark": { "kind": "cross", "content": "第1步起红叉（设计标记）", "status": "recognized" },
+      "reference_answer": "a∈{0,1}。a=0 时 B=∅，∅⊆A 成立；a≠0 时 B={1/a}，须 1/a=1 即 a=1。",
+      "error_cause_hypotheses": [
+        {
+          "category": "incomplete_case_split",
+          "statement": "默认 B 非空，直接除以 a，漏掉 a=0 使 B=∅ 的情形",
+          "applicability": "B⊆A 允许 B 为空集；除以 a 隐含 a≠0 未讨论",
+          "support_status": "needs_verification",
+          "evidence": [
+            { "source_type": "student_step", "step_id": 0, "snippet": "由 ax=1 得 x=1/a（未讨论 a=0）" },
+            { "source_type": "question_condition", "snippet": "B⊆A（允许 B=∅）" }
+          ],
+          "rule_ids": ["SET-02"]
+        }
+      ],
+      "linked_rule_ids": ["SET-02"],
+      "expected_handling": "定位首个错误步骤为 step 0（除以 a 未讨论 a=0）；给出分类不全假设并引用 SET-02；可用一道诊断题（B={x|ax=1}⊆{2}，求 a）验证是否补上空集情形。",
+      "diagnosis_status": "needs_verification"
+    },
+    {
+      "sample_id": "FIX-SET-02",
+      "knowledge_point": "sets",
+      "title": "∈ 与 ⊆ 混用",
+      "stem": "已知集合 A={1,2}，用适当符号（∈、∉、⊆、⊊）填空：{1} ____ A。",
+      "conditions": ["{1} 是集合，不是元素"],
+      "student_steps": [
+        { "step_index": 0, "content": "答：{1} ∈ A" }
+      ],
+      "teacher_mark": { "kind": "cross", "content": "红叉（设计标记）", "status": "recognized" },
+      "reference_answer": "{1} ⊆ A（且 {1} ⊊ A）。{1} 是集合，与 A 之间是包含关系；1∈A 才是元素属于关系。",
+      "error_cause_hypotheses": [
+        {
+          "category": "concept_confusion",
+          "statement": "混淆元素属于（∈）与集合包含（⊆），把集合 {1} 当作元素处理",
+          "applicability": "填空对象 {1} 是集合；∈ 只用于元素与集合之间",
+          "support_status": "needs_verification",
+          "evidence": [
+            { "source_type": "student_step", "step_id": 0, "snippet": "{1} ∈ A" },
+            { "source_type": "question_condition", "snippet": "填空对象为 {1}（集合）" }
+          ],
+          "rule_ids": ["SET-01"]
+        }
+      ],
+      "linked_rule_ids": ["SET-01"],
+      "expected_handling": "定位 step 0；概念混淆假设引用 SET-01；诊断题可给出 1____A 与 {1}____A 对比填空，检验能否区分两类关系。",
+      "diagnosis_status": "needs_verification"
+    },
+    {
+      "sample_id": "FIX-FUN-01",
+      "knowledge_point": "functions",
+      "title": "定义域漏分母非零",
+      "stem": "求函数 f(x)=√(x-1) + 1/(x-2) 的定义域。",
+      "conditions": ["偶次根式被开方数≥0", "分母≠0"],
+      "student_steps": [
+        { "step_index": 0, "content": "要使函数有意义，需 x-1≥0" },
+        { "step_index": 1, "content": "解得 x≥1" },
+        { "step_index": 2, "content": "答：定义域为 [1,+∞)" }
+      ],
+      "teacher_mark": { "kind": "cross", "content": "第2步红叉（设计标记）", "status": "recognized" },
+      "reference_answer": "需 x-1≥0 且 x-2≠0，即 x≥1 且 x≠2，定义域为 [1,2)∪(2,+∞)。",
+      "error_cause_hypotheses": [
+        {
+          "category": "domain_omission",
+          "statement": "只考虑根式条件，遗漏分母 x-2≠0",
+          "applicability": "函数含分式 1/(x-2)，x=2 时分母为零",
+          "support_status": "needs_verification",
+          "evidence": [
+            { "source_type": "student_step", "step_id": 0, "snippet": "需 x-1≥0（未列分母条件）" },
+            { "source_type": "question_condition", "snippet": "f(x) 含 1/(x-2)" }
+          ],
+          "rule_ids": ["FUN-01"]
+        }
+      ],
+      "linked_rule_ids": ["FUN-01"],
+      "expected_handling": "定位首个错误步骤 step 0（条件列举不全）；定义域遗漏假设引用 FUN-01；诊断题可给 f(x)=1/(x+3)+√x 检验是否同时列两类条件。",
+      "diagnosis_status": "needs_verification"
+    },
+    {
+      "sample_id": "FIX-FUN-02",
+      "knowledge_point": "functions",
+      "title": "单调区间用并集连接",
+      "stem": "写出函数 f(x)=1/x 的单调递减区间。",
+      "conditions": ["定义域为 (-∞,0)∪(0,+∞)，不连通"],
+      "student_steps": [
+        { "step_index": 0, "content": "f(x)=1/x 在 (-∞,0) 上递减，在 (0,+∞) 上递减" },
+        { "step_index": 1, "content": "答：单调递减区间为 (-∞,0)∪(0,+∞)" }
+      ],
+      "teacher_mark": { "kind": "cross", "content": "第1步红叉（设计标记）", "status": "recognized" },
+      "reference_answer": "单调递减区间为 (-∞,0) 和 (0,+∞)，分别列出，不能用 ∪ 连接后宣称整体递减。反例：-1<1 但 f(-1)=-1<f(1)=1，违反减函数定义。",
+      "error_cause_hypotheses": [
+        {
+          "category": "concept_confusion",
+          "statement": "把单调性当作可跨区间合并的整体性质，用并集连接两个递减区间",
+          "applicability": "单调性按区间定义；定义域不连通时跨区间取点可反驳",
+          "support_status": "needs_verification",
+          "evidence": [
+            { "source_type": "student_step", "step_id": 1, "snippet": "(-∞,0)∪(0,+∞)" },
+            { "source_type": "student_step", "step_id": 0, "snippet": "分段判断本身正确，说明错误发生在合并表述" }
+          ],
+          "rule_ids": ["FUN-02"]
+        }
+      ],
+      "linked_rule_ids": ["FUN-02"],
+      "expected_handling": "step 0 正确、step 1 错误，首个错误步骤为 step 1；概念混淆假设引用 FUN-02，反例 f(-1)<f(1) 可数值核对；诊断题可让学生用定义判断跨区间两点是否满足递减。",
+      "diagnosis_status": "needs_verification"
+    },
+    {
+      "sample_id": "FIX-INE-01",
+      "knowledge_point": "basic_inequalities",
+      "title": "负变量套用基本不等式",
+      "stem": "已知 x<0，求 x + 1/x 的最值。",
+      "conditions": ["x<0（两项均为负）"],
+      "student_steps": [
+        { "step_index": 0, "content": "由基本不等式 x+1/x ≥ 2√(x·1/x) = 2" },
+        { "step_index": 1, "content": "答：最小值为 2" }
+      ],
+      "teacher_mark": { "kind": "cross", "content": "全题红叉（设计标记）", "status": "recognized" },
+      "reference_answer": "x<0 时 -x>0，(-x)+1/(-x)≥2，故 x+1/x≤-2，最大值 -2，当且仅当 x=-1 取得。无最小值（x→0⁻ 或 x→-∞ 时趋于 -∞）。",
+      "error_cause_hypotheses": [
+        {
+          "category": "condition_omission",
+          "statement": "忽略基本不等式 a>0、b>0 的正性前提，对负变量直接套用",
+          "applicability": "题目明确 x<0，x 与 1/x 均为负，不满足正性条件",
+          "support_status": "needs_verification",
+          "evidence": [
+            { "source_type": "student_step", "step_id": 0, "snippet": "x+1/x ≥ 2√(x·1/x) = 2" },
+            { "source_type": "question_condition", "snippet": "x<0" }
+          ],
+          "rule_ids": ["INE-01"]
+        }
+      ],
+      "linked_rule_ids": ["INE-01"],
+      "expected_handling": "定位 step 0；条件遗漏（正性）假设引用 INE-01；x=-1 时取值 -2、x=-2 时 -2.5 可数值核对；诊断题可给 x<0 求 2x+2/x 最值检验是否先化正。",
+      "diagnosis_status": "needs_verification"
+    },
+    {
+      "sample_id": "FIX-INE-02",
+      "knowledge_point": "basic_inequalities",
+      "title": "等号点不在范围内（需诊断题区分错因）",
+      "stem": "已知 x≥3，求 x + 4/x 的最小值。",
+      "conditions": ["x≥3", "x+4/x 的基本不等式下界为 4，等号条件 x=2"],
+      "student_steps": [
+        { "step_index": 0, "content": "x+4/x ≥ 2√4 = 4" },
+        { "step_index": 1, "content": "答：最小值为 4" }
+      ],
+      "teacher_mark": { "kind": "cross", "content": "第1步红叉（设计标记）", "status": "recognized" },
+      "reference_answer": "等号条件 x=4/x ⇒ x=2，不在 x≥3 内，4 取不到。f(x)=x+4/x 在 [3,+∞) 上递增（f'(x)=1-4/x²>0 当 x>2），最小值 f(3)=3+4/3=13/3。",
+      "error_cause_hypotheses": [
+        {
+          "category": "condition_omission",
+          "statement": "假设H1：能求出等号点 x=2，但未检查其是否在 x≥3 范围内，直接把下界当最小值",
+          "applicability": "学生写对了下界 4，说明会用基本不等式；错误可能在等号可取得性检查",
+          "support_status": "needs_verification",
+          "evidence": [
+            { "source_type": "student_step", "step_id": 1, "snippet": "最小值为 4（未检查等号点）" },
+            { "source_type": "question_condition", "snippet": "x≥3，等号点 x=2 不在范围内" }
+          ],
+          "rule_ids": ["INE-02"]
+        },
+        {
+          "category": "reasoning_gap",
+          "statement": "假设H2：不会解等号条件方程 x=4/x，只记住“≥2√(ab)”的形式，从未考虑等号何时成立",
+          "applicability": "仅凭两步作答无法区分 H1 与 H2：两者都会写出“最小值 4”",
+          "support_status": "needs_verification",
+          "evidence": [
+            { "source_type": "student_step", "step_id": 0, "snippet": "x+4/x ≥ 2√4 = 4（未出现等号条件求解过程）" }
+          ],
+          "rule_ids": ["INE-03"]
+        }
+      ],
+      "linked_rule_ids": ["INE-02", "INE-03"],
+      "expected_handling": "仅凭作答不能确定错因，需要诊断题进一步验证。诊断题A检验能否求等号点（区分H2）；诊断题B检验能否判断等号点在给定范围外时下界不可作为最小值（区分H1）。两题结果组合更新假设支持状态；若仍无法区分，保持 needs_verification，不强行归因。",
+      "diagnosis_status": "needs_verification",
+      "diagnostic_items": [
+        {
+          "purpose": "diagnostic",
+          "targets_hypothesis": "H2",
+          "stem": "已知 x>0，x + 4/x ≥ 4。写出等号成立时 x 的值，并写出求解过程。",
+          "conditions": ["x>0"],
+          "answer_private": "等号成立当且仅当 x=4/x，即 x²=4，取正根 x=2。",
+          "rubric_private": "写出方程 x=4/x 并解得 x=2（舍负根）记通过；只写 x=2 无过程记部分通过需追问；答 x=4 或 ±2 未舍负根记未通过（支持H2）。",
+          "rule_ids": ["INE-03"]
+        },
+        {
+          "purpose": "diagnostic",
+          "targets_hypothesis": "H1",
+          "stem": "已知 x≥3。小明说：因为 x+4/x≥4，所以 x+4/x 的最小值是 4。判断小明的说法是否正确，并说明理由。",
+          "conditions": ["x≥3"],
+          "answer_private": "不正确。等号条件 x=2 不在 x≥3 内，4 取不到；f 在 [3,+∞) 递增，最小值为 f(3)=13/3。",
+          "rubric_private": "指出等号点 x=2 不在范围内、4 取不到记通过（反驳H1中“未检查范围”需结合A题：A通过且B未通过支持H1）；给出 13/3 为加分项非必需；认为小明正确记未通过。",
+          "rule_ids": ["INE-02"]
+        }
+      ]
+    }
+  ]
+}

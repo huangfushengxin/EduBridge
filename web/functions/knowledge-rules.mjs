@@ -1,0 +1,241 @@
+// 由 docs/rules/knowledge-rules-v1.json 生成（library_version=2，冻结）。勿手改，改请改 JSON 后重生成。
+export const RULE_LIBRARY_VERSION = 2;
+export const RULES = [
+  {
+    "schema_version": 1,
+    "rule_id": "SET-01",
+    "knowledge_point": "sets",
+    "title": "元素属于（∈）与集合包含（⊆）的区别",
+    "statement": "a∈A 表示 a 是集合 A 的一个元素；B⊆A 表示 B 的每个元素都是 A 的元素。{1}⊆A 与 1∈A 等价。集合也可以是另一集合的元素：{1}∈A 表示集合 {1} 本身是 A 的元素（例如 {1}∈{{1},2} 成立），不能绝对地说“集合不是元素”。{1}∈A 是否成立取决于 A 的元素中是否包含集合 {1}：对 A={1,2}，其元素是 1 和 2，不含集合 {1}，故 {1}∈A 不成立，而 {1}⊆A 与 {1}⊊A 均成立。",
+    "statement_latex": "B subseteq A iff \forall x(xin B Rightarrow xin A);quad {1}subseteq A iff 1in A;quad A={1,2}: {1}subseteq A, {1}subsetneq A, {1}\notin A;quad {1}in{{1},2}",
+    "applicability_conditions": [
+      "A、B 为集合",
+      "判断对象是元素还是集合已明确",
+      "{1}∈A 型判断须先明确 A 的元素是否包含集合 {1}"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "混淆 ∈ 与 ⊆，把 {1}⊆A 写成 {1}∈A；或绝对化地认为“集合不能是元素”",
+        "example": "A={1,2}，学生答 {1}∈A。A 的元素是 1 和 2，不含集合 {1}，故 {1}∈A 不成立；正确为 {1}⊆A 或 {1}⊊A（1∈A 亦成立）。注意不能一般地说“集合不是元素”：{1}∈{{1},2} 是成立的。",
+        "related_error_category": "concept_confusion"
+      }
+    ],
+    "source": {
+      "description": "人教A版普通高中教科书数学必修第一册第一章“集合”关于元素与集合、集合间关系的定义（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照手头教材核对章节表述；本条数学内容为标准定义，可独立核对。v2 修订（AI辅助复核意见2）：删除绝对化口径，明确集合可以是另一集合的元素，本题按 A 的具体元素判断。",
+      "url": null
+    },
+    "rule_version": 2
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "SET-02",
+    "knowledge_point": "sets",
+    "title": "含参子集问题必须讨论空集情形",
+    "statement": "空集是任何集合的子集（∅⊆A 恒成立）。解 B⊆A 的含参问题时，必须单独讨论 B=∅ 的参数取值，再讨论 B≠∅ 的情形，最后合并。",
+    "statement_latex": "\\varnothing \\subseteq A;\\quad B=\\{x \\mid ax=1\\} \\subseteq A \\Rightarrow a=0 \\text{（此时 } B=\\varnothing\\text{）须计入}",
+    "applicability_conditions": [
+      "B 由含参方程/条件定义，参数可能使 B 为空",
+      "题目要求 B⊆A（含相等）"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "默认 B 非空，漏掉使 B=∅ 的参数值",
+        "example": "A={1}，B={x|ax=1}，B⊆A。学生只解 a=1，漏掉 a=0（B=∅⊆A 成立）；正确答案 a∈{0,1}。",
+        "related_error_category": "incomplete_case_split"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第一章“空集是任何集合的子集”规定（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对；空集为任何集合子集是标准约定，可独立核对。",
+      "url": null
+    },
+    "rule_version": 1
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "SET-03",
+    "knowledge_point": "sets",
+    "title": "集合元素互异性与解后检验（按题目明确条件）",
+    "statement": "集合中的元素互不相同（互异性）。列举式中出现重复表达式并不使集合非法：{1,1} 就是 {1}。由含参条件求出参数后，必须代回检验是否违反题目的明确条件（如“集合恰有两个元素”、元素个数、属于关系等），违反者舍去；不能仅因列举式中出现重复表达式就一概舍去参数值，必须结合题目明确的元素个数等要求判断。",
+    "statement_latex": "{1,1}={1};quad \text{设 } {a+1,a^2+1} \text{ 恰有两个元素且 } 2in{a+1,a^2+1}: a=1 Rightarrow {2,2}={2}\text{（仅一个元素，舍）}; a=-1 Rightarrow {0,2}\text{（符合）}",
+    "applicability_conditions": [
+      "集合以列举法含参数表达式给出",
+      "题目对元素个数或其他条件有明确要求",
+      "参数取值可能使元素表达式相等或违反题目明确条件"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "解出参数后不按题目明确的元素个数要求代回检验；或反过来，把列举式中出现重复表达式一概判为非法",
+        "example": "已知集合 {a+1, a²+1} 恰有两个元素，且 2 属于该集合，求 a。由 2∈{a+1,a²+1} 得 a+1=2 或 a²+1=2，即 a=1 或 a=±1。a=1 时集合为 {2,2}={2}，只有一个元素，违反“恰有两个元素”，舍去；a=-1 时集合为 {0,2}，恰有两个元素且含 2，符合。答 a=-1。注意：若题目未要求“恰有两个元素”，a=1 不能舍去（{2} 仍含 2）。",
+        "related_error_category": "condition_omission"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第一章集合元素“互异性”特征（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对；互异性为集合标准性质，可独立核对。v2 修订（AI辅助复核意见1）：原例 a∈{1,a²} 不能排除 a=1（{1,1}={1}，1∈{1} 成立，原条件下答案应为 {0,1}），更换为明确规定“恰有两个元素”的例题；规则不再把重复表达式一概判为非法。",
+      "url": null
+    },
+    "rule_version": 2
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "FUN-01",
+    "knowledge_point": "functions",
+    "title": "定义域优先：根式与分式的限制须同时满足",
+    "statement": "求函数定义域时，偶次根式被开方数≥0，分式分母≠0，各限制条件须取交集同时满足，不能只考虑其中一个。",
+    "statement_latex": "f(x)=\\sqrt{x-1}+\\frac{1}{x-2} \\Rightarrow x-1 \\ge 0 \\land x-2 \\ne 0 \\Rightarrow x \\in [1,2)\\cup(2,+\\infty)",
+    "applicability_conditions": [
+      "函数由解析式给出，求实数定义域",
+      "含偶次根式、分式等限制结构"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "只处理根式条件，遗漏分母非零",
+        "example": "f(x)=√(x-1)+1/(x-2)，学生答 x≥1；漏掉 x≠2，正确为 [1,2)∪(2,+∞)。",
+        "related_error_category": "domain_omission"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第三章函数定义域求法（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对；定义域求法为标准内容，可独立核对。",
+      "url": null
+    },
+    "rule_version": 1
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "FUN-02",
+    "knowledge_point": "functions",
+    "title": "单调性是区间性质：各区间分别单调不自动推出并集上整体单调",
+    "statement": "函数单调性针对一个区间定义：区间内任意 x₁<x₂ 都有 f(x₁)<f(x₂)（增）或 f(x₁)>f(x₂)（减）。f(x)=1/x 在 (-∞,0) 和 (0,+∞) 上分别递减，但各区间分别单调不自动推出并集上整体单调：取 x₁=-1<x₂=1，f(-1)=-1<f(1)=1，违反减函数定义，故在 (-∞,0)∪(0,+∞) 上不是减函数。多个单调区间应分别列出。须区分数学性质与书写规范：数学错误是“宣称在并集上整体单调”；仅用 ∪ 或“或”连接区间而未宣称整体单调的，属书写规范问题——未经教材核实，不能仅凭使用并集符号或某个连接词就确定学生概念错误。",
+    "statement_latex": "f(x)=\tfrac1x: f(-1)=-1 < f(1)=1, -1<1 Rightarrow f \text{ 在 } (-infty,0)cup(0,+infty) \text{ 上非减函数};quad \text{各区间分别递减} \notRightarrow \text{并集上整体递减}",
+    "applicability_conditions": [
+      "讨论函数单调性或单调区间",
+      "定义域不连通（如分式函数）"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "把两个递减区间用并集连接并宣称整体递减（数学错误）；仅用 ∪ 列举区间而未宣称整体单调的属书写规范问题，须区分",
+        "example": "学生答“1/x 的单调递减区间为 (-∞,0)∪(0,+∞)”并宣称在该并集上整体递减：跨区间取点即可反驳（f(-1)=-1<f(1)=1）。若学生只是用 ∪ 列举两个区间、未宣称整体单调，则证据不足以判定概念错误，应先核实教材书写口径再判断。",
+        "related_error_category": "concept_confusion"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第三章函数单调性定义及 1/x 单调区间表述（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对；反例 f(-1)<f(1) 可独立数值核对（见 dev/math-check.mjs）。v2 修订（AI辅助复核意见4）：保留跨区间反例，强调“分别单调不自动推出并集整体单调”；区分数学性质与书写规范，“不用∪连接”的书写口径未经教材核实不得作为判定概念错误的依据。",
+      "url": null
+    },
+    "rule_version": 2
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "FUN-03",
+    "knowledge_point": "functions",
+    "title": "同一函数须定义域与对应关系都相同",
+    "statement": "两个函数是同一函数，当且仅当定义域相同且对应关系（对定义域内每个 x 的函数值）相同。解析式化简后相同但定义域不同的，不是同一函数。",
+    "statement_latex": "f(x)=x \\ (x\\in\\mathbb{R}) \\ne g(x)=\\tfrac{x^2}{x} \\ (x\\ne 0)",
+    "applicability_conditions": [
+      "判断两函数是否相同",
+      "涉及约分、开方等可能改变定义域的化简"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "只看化简后解析式，忽略定义域差异",
+        "example": "学生认为 f(x)=x 与 g(x)=x²/x 是同一函数；g 的定义域为 x≠0，与 f 不同。",
+        "related_error_category": "domain_omission"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第三章“同一函数”判定标准（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对；判定标准为标准定义，可独立核对。",
+      "url": null
+    },
+    "rule_version": 1
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "INE-01",
+    "knowledge_point": "basic_inequalities",
+    "title": "基本不等式 a+b≥2√(ab) 的成立条件与负变量应用",
+    "statement": "基本不等式 a+b≥2√(ab) 对 a,b≥0 成立（含 0，等号当且仅当 a=b）；严格正数不是公式成立的必要条件。“一正二定三相等”是用基本不等式求最值的口诀：求最值时通常限定各项为正，涉及倒数时还须结合分母非零等条件确定适用范围。变量为负时不能直接套用求最小值：x<0 时 x+1/x = -[(-x)+1/(-x)] ≤ -2，最大值 -2 在 x=-1 取得，而非最小值 2。",
+    "statement_latex": "a,bge 0 Rightarrow a+b ge 2sqrt{ab} (\text{等号} iff a=b);quad x<0 Rightarrow x+\tfrac1x le -2, \text{等号当且仅当 } x=-1",
+    "applicability_conditions": [
+      "公式本身：a,b≥0（各项非负）",
+      "用其求最值：通常要求各项为正（“一正”），含倒数形式时分母须非零",
+      "变量符号由题目范围决定"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "对负变量直接套用基本不等式得最小值 2（公式要求各项非负；负变量应先化正）",
+        "example": "x<0，求 x+1/x 的最值。学生答“最小值 2”；实际 x+1/x≤-2，最大值 -2（x=-1）。",
+        "related_error_category": "condition_omission"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第二章基本不等式及其成立条件（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对。v2 修订（AI辅助复核意见3）：公式对 a,b≥0 成立是数学事实（(√a-√b)²≥0 展开即得），严格正数不是必要条件；教材通常按“正数”条件表述，表述口径待对照教材原文核实（见 docs/review/source-verification-log.md）。负变量例题参考结论不变。",
+      "url": null
+    },
+    "rule_version": 2
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "INE-02",
+    "knowledge_point": "basic_inequalities",
+    "title": "等号可取得性：等号点必须在变量允许范围内才是最小值",
+    "statement": "用基本不等式得到下界后，必须检查等号成立条件对应的变量值是否落在题目允许范围内。等号点在范围内，下界才是最小值；不在范围内，下界只是下界（可能为下确界但取不到），须改用单调性等方法在范围内求最值。",
+    "statement_latex": "x \\ge 3:\\ x+\\tfrac4x \\ge 4 \\text{ 的等号点 } x=2 \\notin [3,+\\infty);\\quad f \\text{ 在 } [3,+\\infty) \\text{ 递增},\\ \\min f = f(3)=\\tfrac{13}{3}",
+    "applicability_conditions": [
+      "已用基本不等式得到候选下界",
+      "题目对变量有范围约束"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "求出下界即宣布最小值，不检查等号点是否在范围内",
+        "example": "x≥3，求 x+4/x 最小值。学生答 4（等号 x=2）；x=2 不在 x≥3 内，正确最小值 13/3（x=3）。",
+        "related_error_category": "condition_omission"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第二章基本不等式“三相等”条件及最值存在性讨论（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对；f(3)=13/3≈4.333>4、f 在 [3,∞) 递增可数值/求导核对（见 dev/math-check.mjs）。",
+      "url": null
+    },
+    "rule_version": 1
+  },
+  {
+    "schema_version": 1,
+    "rule_id": "INE-03",
+    "knowledge_point": "basic_inequalities",
+    "title": "等号成立条件的求法与验证（x+k/x 型）",
+    "statement": "对 x+k/x（x>0，k>0），等号成立当且仅当 x=k/x，即 x=√k。求等号点须解此方程并验证为正根；能正确求出等号点，不代表已检查其是否在题目范围内（后者见 INE-02）。",
+    "statement_latex": "x+\\tfrac{k}{x} \\ge 2\\sqrt{k}\\ (x>0),\\quad \\text{等号} \\iff x=\\tfrac{k}{x} \\iff x=\\sqrt{k}",
+    "applicability_conditions": [
+      "x>0 且 k>0",
+      "表达式为 x+k/x 或可化为此形式"
+    ],
+    "common_misuses": [
+      {
+        "misuse": "不会解等号条件方程，或取错根",
+        "example": "x+4/x（x>0）等号条件 x=4/x ⇒ x²=4 ⇒ x=2（取正根）；学生答 x=4 或 x=±2 未舍负根。",
+        "related_error_category": "arithmetic_error"
+      }
+    ],
+    "source": {
+      "description": "人教A版必修第一册第二章基本不等式等号成立条件（依据通行教材内容人工整理，未逐页核对版次页码）",
+      "verified": false,
+      "verification_note": "待负责人对照教材核对；x=2 时 x+4/x=4=2√4 可数值核对（见 dev/math-check.mjs）。",
+      "url": null
+    },
+    "rule_version": 1
+  }
+];

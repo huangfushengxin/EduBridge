@@ -1,0 +1,67 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# env & secrets — 密钥严禁入库
+.env
+.env.*
+!.env.example
+*.local
+secrets/
+*.pem
+*.key
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# 真实学生材料（脱敏样例与演示数据单独管理，不得混入）
+real-data/
+real-assets/
+uploads-real/
+
+# logs & temp
+logs/
+*.log
+tmp/
+.DS_Store
+Thumbs.db
+
+# 本地校验打包产物（dev 运行器生成）
+web/dev/.schema-check.bundle.mjs
+
+# 本机与云端联调记录，含部署标识和私有任务信息
+*.qoder.site
+*.qoder.site.*
+.qoder-sites/
+.qoder-sites.json
+/docs/HANDOFF.md
+/docs/deployment-check.md
+/docs/deployment-decision.md
+/docs/environment-report.md
+/docs/progress/
+/docs/review/
+/docs/samples/handwritten-01.md
+/docs/samples/fixed-01.md
+
+# 生成的上传测试文件和绑定线上实例的运维脚本
+/web/dev/big.png
+/web/dev/paper-1.png
+/web/dev/paper-2.png
+/web/dev/sheet-1.png
+/web/dev/not-an-image.txt
+/web/dev/deployed-runtime-test.mjs
+/web/dev/recognition-public-test.mjs
+/web/dev/probe-limits-*.mjs

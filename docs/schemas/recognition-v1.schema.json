@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "edubridge/recognition-v1",
+  "title": "EduBridge 识别结果 schema（v1，忠实转录）",
+  "description": "视觉模型对单页原卷/答题卡的忠实转录结果。字段允许明确未知（null / uncertain / missing），不强制补全。服务端校验实现见 web/functions/recognition.mjs 的 validateRecognition。",
+  "type": "object",
+  "required": ["schema_version", "source", "questions", "unreadable_regions"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "source": {
+      "type": "object",
+      "description": "图片来源",
+      "required": ["asset_kind", "page_index"],
+      "properties": {
+        "asset_kind": { "enum": ["original", "answer_sheet"] },
+        "page_index": { "type": "integer", "minimum": 0 },
+        "object_key": { "type": ["string", "null"] },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["number", "number_status", "stem", "stem_status", "student_steps", "teacher_marks", "uncertain_fields", "overall_status"],
+        "properties": {
+          "number": { "type": ["string", "null"], "description": "题号，未知为 null" },
+          "number_status": { "enum": ["recognized", "uncertain", "missing"] },
+          "stem": { "type": ["string", "null"], "description": "题干忠实转录，不化简" },
+          "stem_status": { "enum": ["recognized", "uncertain", "missing"] },
+          "student_steps": {
+            "type": "array",
+            "description": "学生作答步骤，保留写错的原样",
+            "items": {
+              "type": "object",
+              "required": ["step_index", "content", "status"],
+              "properties": {
+                "step_index": { "type": "integer", "minimum": 0 },
+                "content": { "type": ["string", "null"] },
+                "status": { "enum": ["recognized", "uncertain", "missing", "blank"] }
+              }
+            }
+          },
+          "teacher_marks": {
+            "type": "array",
+            "description": "老师批改标记，看不清标 uncertain（待确认）",
+            "items": {
+              "type": "object",
+              "required": ["kind", "content", "status"],
+              "properties": {
+                "kind": { "enum": ["cross", "check", "circle", "score", "comment", "other"] },
+                "content": { "type": ["string", "null"] },
+                "status": { "enum": ["recognized", "uncertain", "missing"] },
+                "location_hint": { "type": ["string", "null"] }
+              }
+            }
+          },
+          "uncertain_fields": { "type": "array", "items": { "type": "string" }, "description": "需人工确认的字段路径" },
+          "overall_status": { "enum": ["recognized", "partial", "unreadable"] },
+          "source_image_index": { "type": ["integer", "null"], "minimum": 0, "description": "第4天：该题题干/学生作答所在输入图片下标（0 起）；null/缺省=对应关系不确定，不伪造坐标" },
+          "answer_image_index": { "type": ["integer", "null"], "minimum": 0, "description": "第4天：该题批改标记所在输入图片下标（0 起）；null/缺省=对应关系不确定" }
+        }
+      }
+    },
+    "unreadable_regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["location_hint", "reason"],
+        "properties": {
+          "location_hint": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "transcription_notes": { "type": ["string", "null"] }
+  }
+}
