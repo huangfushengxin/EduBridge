@@ -3,7 +3,9 @@ import hmac
 import json
 import multiprocessing as mp
 import os
-import threading
+from contextlib import asynccontextmanager
+from queue import Empty, Queue
+from time import monotonic
 
 from fastapi import FastAPI, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
@@ -11,43 +13,93 @@ from starlette.concurrency import run_in_threadpool
 from math_service.verifier import verify_batch
 
 
-app = FastAPI(title="EduBridge 数学验证", docs_url=None, redoc_url=None, openapi_url=None)
-POOL = threading.BoundedSemaphore(2)
 MAX_BODY = 24000
 TIMEOUT_SECONDS = 7
+STARTUP_SECONDS = 7
+SLOTS = Queue()
+for _ in range(2):
+    SLOTS.put(None)
 
 
-def solve_in_worker(claims, sender):
-    try:
-        sender.send(verify_batch(claims))
-    finally:
-        sender.close()
+def solve_in_worker(connection):
+    with connection:
+        connection.send("ready")
+        while True:
+            try:
+                claims = connection.recv()
+            except EOFError:
+                return
+            connection.send(verify_batch(claims))
+
+
+def stop_worker(slot):
+    if slot is None:
+        return
+    worker, connection = slot
+    connection.close()
+    if worker.is_alive():
+        worker.kill()
+    worker.join()
+    worker.close()
+
+
+def start_worker():
+    ctx = mp.get_context("spawn")
+    parent, child = ctx.Pipe()
+    worker = ctx.Process(target=solve_in_worker, args=(child,), daemon=True)
+    with child:
+        try:
+            worker.start()
+        except (OSError, RuntimeError):
+            parent.close()
+            worker.close()
+            raise
+    return worker, parent
 
 
 def bounded_verify(claims):
-    if not POOL.acquire(blocking=False):
-        return {"status": "timeout", "code": "math_capacity"}
     try:
-        ctx = mp.get_context("spawn")
-        receive, send = ctx.Pipe(duplex=False)
-        worker = ctx.Process(target=solve_in_worker, args=(claims, send), daemon=True)
-        with receive, send:
-            worker.start()
-            send.close()
-            try:
-                if not receive.poll(TIMEOUT_SECONDS):
-                    return {"status": "timeout", "code": "math_timeout"}
-                return receive.recv()
-            except EOFError:
+        slot = SLOTS.get_nowait()
+    except Empty:
+        return {"status": "timeout", "code": "math_capacity"}
+    reusable = False
+    try:
+        if slot is not None and not slot[0].is_alive():
+            stop_worker(slot)
+            slot = None
+        if slot is None:
+            started = monotonic()
+            slot = start_worker()
+            connection = slot[1]
+            if not connection.poll(max(0, STARTUP_SECONDS - (monotonic() - started))) or connection.recv() != "ready":
                 return {"status": "unsupported", "code": "math_worker_unavailable"}
-            finally:
-                worker.join(0.2)
-                if worker.is_alive():
-                    worker.kill()
-                    worker.join()
-                worker.close()
+        connection = slot[1]
+        connection.send(claims)
+        if not connection.poll(TIMEOUT_SECONDS):
+            return {"status": "timeout", "code": "math_timeout"}
+        result = connection.recv()
+        reusable = True
+        return result
+    except (EOFError, OSError, RuntimeError):
+        return {"status": "unsupported", "code": "math_worker_unavailable"}
     finally:
-        POOL.release()
+        try:
+            if not reusable:
+                stop_worker(slot)
+        finally:
+            SLOTS.put(slot if reusable else None)
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    yield
+    # ASGI finishes in-flight requests before shutdown.
+    for _ in range(2):
+        stop_worker(SLOTS.get_nowait())
+        SLOTS.put(None)
+
+
+app = FastAPI(title="EduBridge 数学验证", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
 
 @app.get("/health")

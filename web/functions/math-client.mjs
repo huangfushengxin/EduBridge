@@ -79,6 +79,8 @@ export function createMathVerifier({ readEnv, fetchImpl = fetch }) {
         headers:{"content-type":"application/json", authorization:"Bearer " + token},
         body:JSON.stringify({claims: normalized}),
       });
+      if ([408, 504].includes(response.status)) return {status:"timeout",code:"math_timeout"};
+      if (response.status === 429) return {status:"timeout",code:"math_capacity"};
       if (!response.ok) return {status:"unsupported",code:"math_service_unavailable"};
       const value = await response.json();
       if (!statuses.has(value?.status)) return {status:"unsupported",code:"math_response_invalid"};

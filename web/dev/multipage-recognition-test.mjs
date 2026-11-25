@@ -135,4 +135,47 @@ const ambiguous=mergeQuestionRows([
 ],sources);
 same(ambiguous.length,3,"different questions with the same printed number are kept");
 truth(ambiguous.every(q=>q.field_status.linkage==="uncertain"&&q.teacher_result==="unclear"),"duplicate numbering is never automatically paired or graded");
+const paper = (id, number, stem, source = "b", extra = {}) => row(id, source, {
+  number, stem, field_status:{number:"recognized",stem:"recognized"}, ...extra,
+});
+const answer = (id, number, student_answer, extra = {}) => row(id, "c", {
+  number, student_answer, field_status:{number:"recognized",answer:"recognized"}, ...extra,
+});
+const parentStem = "已知函数 f(x)=x+4/x，x≥3。\n（1）求函数的最小值，并说明理由。\n【2】计算 f(4)。";
+const cross = {kind:"cross",status:"recognized",scope:"question"};
+const main = paper("p7", "第7题", parentStem, "b", {teacher_marks:[cross]});
+const sub1 = answer("s71", "７［０１］", "x=2 时取等，最小值为 4", {teacher_marks:[cross]});
+const sub2 = answer("s72", "7〔二〕", "f(4)=5");
+const paired = mergeQuestionRows([main, sub1, sub2, answer("s8","8(1)","other")], sources);
+const match = (rows, id) => rows.find((entry) => entry.id === id);
+same(questionKey("第７题【一】［B］(02)"),"7(1)(b)(2)","bracket variants and nested labels normalize");
+same(questionKey("(2)"),"","a bare sub-question never implies a main question");
+same(match(paired,"s71").stem,"已知函数 f(x)=x+4/x，x≥3。 求函数的最小值，并说明理由。","shared conditions plus correct first sub-question");
+same(match(paired,"s72").stem,"已知函数 f(x)=x+4/x，x≥3。 计算 f(4)。","second sub-question gets its own stem");
+same(match(paired,"s72").student_answer,"f(4)=5","no sibling answer contamination");
+same(match(paired,"s72").teacher_result,"unclear","parent grading is never copied to sub-questions");
+same(match(paired,"s71").teacher_result,"wrong","sub-question grading stays with its answer");
+same(match(paired,"s71").source_page_index,1,"original and sheet page attribution is preserved");
+same(match(paired,"s8").stem,null,"unrelated question cannot inherit a stem");
+same(match(paired,"p7").student_answer,null,"parent never collects child answer text");
+const exact = mergeQuestionRows([main, paper("exact","7(1)","精确原文"), sub1],sources);
+same(match(exact,"exact").stem,"精确原文","exact paper key takes priority");
+const conflict = mergeQuestionRows([main, paper("duplicate","7","另一份试卷。\n(1) A。\n(2) B。","a"), sub1],sources);
+same(match(conflict,"s71").field_status.linkage,"uncertain","conflicting parents require confirmation");
+same(match(conflict,"s71").stem,null,"conflicting parents do not supply text");
+const unmarked = mergeQuestionRows([paper("unmarked","7","请计算 f(1) 与 f(2)。"),sub1],sources);
+same(match(unmarked,"s71").stem,null,"inline mathematical expressions do not split the stem");
+same(match(unmarked,"s71").source_asset_id,"b","manual matching can open the parent paper");
+const nested = paper("nested","7","总条件：\n(1) 第一组：\n【a】计算甲。\n【b】计算乙。\n(2) 第二组。");
+const nestedAnswer = answer("nested-answer","7（1）[b]","乙的作答");
+same(match(mergeQuestionRows([nested,nestedAnswer],sources),"nested-answer").stem,
+  "总条件： 第一组： 计算乙。","isolates a nested section and preserves both levels of conditions");
+const explicit = paper("explicit","7","总条件：\n(1)(1) 计算甲。\n(1)(2) 计算乙。\n(2) 计算丙。");
+same(match(mergeQuestionRows([explicit,answer("nested-number","7[1]【二】","乙")],sources),"nested-number").stem,
+  "总条件： 计算乙。","supports explicit multi-level numeric markers");
+const choices = paper("choices","7","选择正确答案。\n(A) 甲\n(B) 乙");
+same(match(mergeQuestionRows([choices,answer("looks-like-option","7(a)","甲")],sources),"looks-like-option").stem,
+  null,"multiple-choice labels are not treated as child questions");
+const revised = {...sub1, human:{number:"7(1)",stem:"人工确认的题干",gradingResult:"wrong"}, status:"confirmed", confirmed_version:2};
+same(match(mergeQuestionRows([main,revised],sources),"s71").human.stem,"人工确认的题干","existing confirmation stays anchored to the sheet row");
 console.log(assertions+" passed; synthetic materials, no external model calls");

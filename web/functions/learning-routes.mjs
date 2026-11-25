@@ -76,7 +76,7 @@ function canRetryFormat(work) {
     (ruleExerciseRecovery(work) || (!work.formatRecoveryUsed && workStages.has(work.fixStage)));
 }
 
-const retryableMathCodes = new Set(["math_service_unavailable", "math_timeout", "math_not_configured", "invalid_claim"]);
+const retryableMathCodes = new Set(["math_service_unavailable", "math_timeout", "math_capacity", "math_worker_unavailable", "math_not_configured", "invalid_claim"]);
 
 function canRetryMathArtifact(artifact) {
   return artifact.review_status === "pass" && artifact.math_coverage === "covered" &&

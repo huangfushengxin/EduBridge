@@ -680,4 +680,14 @@ const adapter = createMathVerifier({readEnv:env,fetchImpl:async (url,init)=>{
 }});
 check("服务间认证及结构化验证", (await adapter([{kind:"equivalent"}])).status==="failed");
 check("数学服务未配置", (await createMathVerifier({readEnv:()=>null})([{kind:"equivalent"}])).code==="math_not_configured");
+for(const [httpStatus,status,code] of [
+  [408,"timeout","math_timeout"],[504,"timeout","math_timeout"],
+  [429,"timeout","math_capacity"],[503,"unsupported","math_service_unavailable"],
+]){
+  const unavailable=createMathVerifier({readEnv:env,fetchImpl:async()=>new Response(null,{status:httpStatus})});
+  const result=await unavailable([{kind:"equivalent"}]);
+  check("数学 HTTP 错误 "+httpStatus+" 保持未完成状态",result.status===status&&result.code===code);
+}
+const invalidMath=createMathVerifier({readEnv:env,fetchImpl:async()=>Response.json({status:"ok"})});
+check("无效的数学核验响应不得通过",(await invalidMath([{kind:"equivalent"}])).code==="math_response_invalid");
 console.log(passed+" passed; simulated inputs and model calls; "+(mathEndpoint ? "real local SymPy HTTP" : "simulated math")+"; 0 paid requests");

@@ -45,6 +45,26 @@ class VerificationTests(unittest.TestCase):
         self.check(claim, "passed")
         self.check({**claim, "domain": domain(0, 1, True, True)}, "failed", "domain_contains_undefined_point")
 
+    def test_boundary_minimum_is_exact(self):
+        bounded = domain(3, lower_closed=True)
+        value = tree("add", "x", tree("div", 4, "x"))
+        lower_bound = {"kind": "inequality", "left": value, "right": "13/3", "relation": "ge",
+                       "domain": bounded, "expected": bounded}
+        equality = {"kind": "equation", "left": value, "right": "13/3", "relation": "eq",
+                    "domain": bounded, "expected": [3]}
+        self.assertEqual(verify_batch([lower_bound, equality])["status"], "passed")
+        self.check({**lower_bound, "relation": "gt"}, "failed")
+        self.check({**equality, "expected": [3, "4/3"]}, "failed")
+        self.check({**lower_bound, "domain": domain(3), "expected": domain(3)}, "passed")
+
+    def test_rational_inequality_preserves_poles_and_exact_endpoints(self):
+        quotient = tree("div", tree("sub", "x", 2), tree("sub", "x", 1))
+        claim = {"kind": "inequality", "left": quotient, "right": 0, "relation": "le",
+                 "domain": domain(1, 3), "expected": domain(1, 2, upper_closed=True)}
+        self.check(claim, "passed")
+        self.check({**claim, "domain": domain(1, 3, lower_closed=True)}, "failed", "domain_contains_undefined_point")
+        self.check({**claim, "expected": domain(1, 2)}, "failed")
+
     def test_amgm_and_equality_attainability(self):
         claim = {"kind": "amgm2", "a": 1, "b": 4, "claimed_lower": 4, "equality_x": 2,
                  "domain": domain(1, 3, True, True)}

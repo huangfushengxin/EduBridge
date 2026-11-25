@@ -2,7 +2,7 @@
 import re
 
 import sympy as sp
-from sympy.solvers.inequalities import solve_univariate_inequality
+from sympy.solvers.inequalities import solve_rational_inequalities
 
 
 X = sp.Symbol("x", real=True)
@@ -191,7 +191,9 @@ def verify_claim(claim):
         if comparison in (sp.S.true, sp.S.false):
             solved = domain if comparison == sp.S.true else sp.S.EmptySet
         else:
-            solved = solve_univariate_inequality(comparison, X, relational=False) & domain
+            numerator, denominator = sp.fraction(difference)
+            fraction = (sp.Poly(numerator, X, domain=sp.QQ), sp.Poly(denominator, X, domain=sp.QQ))
+            solved = solve_rational_inequalities([[(fraction, comparison.rel_op)]]) & domain
     else:
         raise Unsupported("relation_unsupported")
     if isinstance(solved, sp.ConditionSet):
