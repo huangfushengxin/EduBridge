@@ -86,10 +86,10 @@ export async function runRepairTests(){
    'normalize a subquestion separator without joining different subquestions');
  check(teacherResult([{kind:'score',content:'3',status:'recognized',scope:'question'}])==='unclear','score alone is not correctness');
  const env=k=>({MODEL_BASE_URL:'https://example.test/v1',MODEL_API_KEY:'test-only-key',VISION_MODEL:'mock'})[k];
- const reviewRequest=async (base)=>{
+ const reviewRequest=async (base, model='deepseek-v4-pro')=>{
    let body;
    const provider=createModelProvider({
-     readEnv:name=>({MODEL_BASE_URL:base,REVIEW_MODEL:'deepseek-v4-pro'})[name] ?? env(name),
+     readEnv:name=>({MODEL_BASE_URL:base,REVIEW_MODEL:model})[name] ?? env(name),
      fetchImpl:async (_url,options)=>{
        body=JSON.parse(options.body);
        return Response.json({choices:[{message:{content:'{"reviews":[]}'}}]});
@@ -101,6 +101,9 @@ export async function runRepairTests(){
  const bailianReview=await reviewRequest('https://dashscope.aliyuncs.com/compatible-mode/v1');
  check(bailianReview.enable_thinking===false && bailianReview.stream===false && bailianReview.max_tokens===1000 &&
    !Object.hasOwn(bailianReview,'thinking'),'Bailian DeepSeek review disables thinking with the supported parameter');
+ const workspaceReview=await reviewRequest('https://workspace-example.cn-beijing.maas.aliyuncs.com/compatible-mode/v1','deepseek-v4.1-flash');
+ check(workspaceReview.enable_thinking===false && !Object.hasOwn(workspaceReview,'thinking'),
+   'Bailian workspace hosts and V4.1 reviewer use the same supported parameter');
  const deepseekReview=await reviewRequest('https://api.deepseek.com/v1');
  check(deepseekReview.thinking?.type==='disabled' && !Object.hasOwn(deepseekReview,'enable_thinking'),
    'direct DeepSeek review uses its own thinking parameter');

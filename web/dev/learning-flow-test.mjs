@@ -310,7 +310,7 @@ timed=await step(slow.call,slowFixture,timed);
 check("审核超时留档并拦截学生内容",timed.work[0].error==="model_timeout" &&
   timed.work[0].items.length===0 && timed.work[0].checks[0].checks.some((check)=>check.check_type==="model_review" && check.status==="timeout"));
 const sentArtifact=reviewRequest.payload.artifacts[0];
-check("审核只发送当前题目、必要证据与数学验证，限制输出量",reviewRequest.maxTokens===1000 &&
+check("审核只发送当前题目、必要证据与数学验证，限制输出量",reviewRequest.maxTokens===2000 &&
   reviewRequest.prompt.includes("只需独立求解候选题") && sentArtifact.verification_status==="passed" &&
   sentArtifact.math_claims.length>0 && sentArtifact.options.length===3 && sentArtifact.answer_private &&
   !Object.hasOwn(sentArtifact,"history") && !Object.hasOwn(reviewRequest.payload.question,"studentAnswer") &&

@@ -242,7 +242,7 @@ export function learningRoutes({db, fail, rows, requireOwner, ownedTask, current
       const corrective = work.fixStage === stage
         ? "\n上次输出未通过校验。"+(issueAdvice[work.formatIssue] ?? "严格核对 JSON 字段名称、值域和结构。")
         : "";
-      const maxTokens = role === "review" ? 1000 * reviewArtifacts(work,stage).length : undefined;
+      const maxTokens = role === "review" ? 2000 * reviewArtifacts(work,stage).length : undefined;
       result = await model.generate(role,prompt + corrective,maxTokens);
     } catch {
       result = {ok:false,errorCode:"model_failed"};

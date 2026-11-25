@@ -40,7 +40,9 @@ export function createModelProvider({ readEnv, fetchImpl = fetch, timeoutMs = 48
     if (role === "vision" || /^qwen/i.test(modelName)) return { enable_thinking: false, temperature: 0 };
     if (role !== "review") return {};
     const host = new URL(base).hostname;
-    if (/(^|\.)dashscope(?:-[a-z0-9-]+)?\.aliyuncs\.com$/i.test(host) && /^deepseek-v4-(?:pro|flash)(?:-|$)/i.test(modelName)) {
+    const isBailian = /(^|\.)dashscope(?:-[a-z0-9-]+)?\.aliyuncs\.com$/i.test(host) ||
+      /^[a-z0-9-]+\.[a-z0-9-]+\.maas\.aliyuncs\.com$/i.test(host);
+    if (isBailian && /^deepseek-v4(?:\.1)?-(?:pro|flash)(?:-|$)/i.test(modelName)) {
       return { enable_thinking: false };
     }
     if (host === "api.deepseek.com" && /^deepseek-(?:v4-pro|v4-flash|flash)(?:-|$)/i.test(modelName)) {
