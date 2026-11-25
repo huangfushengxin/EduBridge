@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { ArrowUpRight, ChartNoAxesCombined, ClipboardCheck, FolderOpen, GraduationCap, UserRound } from "lucide-react";
+import { ApiError, describeError, readWorkspaceAccess, signOutWorkspace, type WorkspaceAccess } from "@/lib/api";
 import { Link, RouterProvider, useRouter } from "@/lib/router";
 import { UploadProvider } from "@/lib/store";
 import ConfirmPage from "@/pages/Confirm";
@@ -8,6 +10,7 @@ import LearningPage from "@/pages/Learning";
 import ProfilePage from "@/pages/Profile";
 import StatisticsPage from "@/pages/Statistics";
 import UploadPage from "@/pages/Upload";
+import LoginPage from "@/pages/Login";
 import "./workspace.css";
 
 const nav = [
@@ -20,7 +23,7 @@ const stages = [{path:"/upload",to:"/upload",label:"上传材料"},
   {path:"/confirm",to:"/confirm?mode=custom",label:"识别与确认"},
   {path:"/learning",to:"/learning",label:"诊断与复测"}];
 
-function Shell() {
+function Shell({logout}: {logout?:()=>void}) {
   const { path, query } = useRouter();
   const active = nav.find(({paths})=>paths.includes(path));
   const currentStep = stages.find(({path:stepPath})=>stepPath===path);
@@ -41,7 +44,10 @@ function Shell() {
     <div className="workspace-main">
       <header className="workspace-top">
         <div><span>学习工作台</span><span aria-hidden="true">/</span><strong>{active?.label ?? (path === "/demo" ? "演示样例" : "项目介绍")}</strong></div>
-        <Link to="/demo" className="workspace-demo-link">演示样例 <ArrowUpRight size={15} aria-hidden="true" /></Link>
+        <div>
+          <Link to="/demo" className="workspace-demo-link">演示样例 <ArrowUpRight size={15} aria-hidden="true" /></Link>
+          {logout && <button type="button" className="workspace-demo-link" onClick={logout}>退出登录</button>}
+        </div>
       </header>
       <main id="workspace-content" className="min-w-0 flex-1">
         {currentStep && <nav className="workspace-steps" aria-label="诊断流程">
@@ -64,5 +70,42 @@ function Shell() {
 }
 
 export default function App() {
-  return <UploadProvider><RouterProvider><Shell /></RouterProvider></UploadProvider>;
+  const [access,setAccess] = useState<WorkspaceAccess | null>(null);
+  const [error,setError] = useState("");
+
+  async function refreshAccess(expectSignedIn = false) {
+    try {
+      const current = await readWorkspaceAccess();
+      if (expectSignedIn && !current.authenticated) throw new ApiError("login_session_unavailable", 401);
+      setAccess(current);
+      setError("");
+    } catch (error) {
+      if (!expectSignedIn && ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname) &&
+          error instanceof ApiError && error.status === 404 && ["not_found","HTTP 404"].includes(error.message)) {
+        setAccess({required:false,configured:false,authenticated:false});
+        return;
+      }
+      throw error;
+    }
+  }
+
+  useEffect(()=>{
+    const refresh = () => void refreshAccess().catch((error)=>setError(describeError(error)));
+    refresh();
+    window.addEventListener("focus",refresh);
+    return ()=>window.removeEventListener("focus",refresh);
+  },[]);
+
+  if (!access) return <main className="workspace-login">
+    <div className="workspace-login-card workspace-panel" role="status">
+      {error || "正在检查登录状态…"}
+      {error && <button type="button" className="workspace-demo-link" onClick={()=>void refreshAccess().catch((err)=>setError(describeError(err)))}>重试</button>}
+    </div>
+  </main>;
+  if (access.required && !access.authenticated) return <LoginPage configured={access.configured} onSignedIn={()=>refreshAccess(true)} />;
+  const logout = access.required ? ()=>{
+    signOutWorkspace();
+    setAccess({...access,authenticated:false});
+  } : undefined;
+  return <UploadProvider><RouterProvider><Shell logout={logout} /></RouterProvider></UploadProvider>;
 }

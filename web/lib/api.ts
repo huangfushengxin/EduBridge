@@ -21,6 +21,23 @@ export class ApiError extends Error {
 
 const TOKEN_KEY = "eb_session_token";
 const SESSION_HEADER = "x-eb-session";
+const WORKSPACE_TOKEN_KEY = "eb_workspace_access";
+let workspaceToken: string | null = null;
+try {
+  workspaceToken = sessionStorage.getItem(WORKSPACE_TOKEN_KEY);
+} catch {
+  // 当前标签页仍可在内存中保留登录状态。
+}
+
+function setWorkspaceToken(token: string | null) {
+  workspaceToken = token;
+  try {
+    if (token) sessionStorage.setItem(WORKSPACE_TOKEN_KEY,token);
+    else sessionStorage.removeItem(WORKSPACE_TOKEN_KEY);
+  } catch {
+    // 浏览器拒绝保存时仅使用当前页面的内存会话。
+  }
+}
 
 export function getSessionToken(): string | null {
   try {
@@ -40,7 +57,10 @@ function setSessionToken(token: string): void {
 
 function authHeaders(): Record<string, string> {
   const token = getSessionToken();
-  return token ? { [SESSION_HEADER]: token } : {};
+  const headers: Record<string, string> = {};
+  if (token) headers[SESSION_HEADER] = token;
+  if (workspaceToken) headers["x-eb-workspace"] = workspaceToken;
+  return headers;
 }
 
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
@@ -94,6 +114,16 @@ export async function requestJson<T>(path: string, init?: RequestInit): Promise<
 export function describeError(error: unknown): string {
   if (!(error instanceof ApiError)) return "操作失败，请重试";
   switch (error.message) {
+    case "login_required":
+      return "请先登录 EduBridge AI";
+    case "login_bad_credentials":
+      return "账号或密码不正确";
+    case "login_rate_limited":
+      return "尝试次数较多，请稍等一分钟后重试";
+    case "login_not_configured":
+      return "站点登录配置尚未就绪";
+    case "login_session_unavailable":
+      return "服务端未能确认登录状态，请重试";
     case "session_required":
       return "会话凭据缺失或失效，请刷新页面重新建立会话";
     case "payload_too_large":
@@ -165,6 +195,23 @@ export function describeError(error: unknown): string {
   }
 }
 
+export interface WorkspaceAccess {
+  required: boolean;
+  configured: boolean;
+  authenticated: boolean;
+}
+
+export const readWorkspaceAccess = () => requestJson<WorkspaceAccess>("/api/auth/status");
+
+export async function signInWorkspace(username: string, password: string) {
+  await ensureSession();
+  const result = await requestJson<{token:string}>("/api/auth/login",{method:"POST",body:JSON.stringify({username,password})});
+  if (!result?.token) throw new ApiError("login_session_unavailable",401);
+  setWorkspaceToken(result.token);
+}
+
+export const signOutWorkspace = () => setWorkspaceToken(null);
+
 /* ---------- 会话 ---------- */
 
 let sessionPromise: Promise<string> | null = null;
@@ -177,7 +224,7 @@ export function ensureSession(): Promise<string> {
     const res = await apiFetch("/api/session", { method: "POST" });
     if (!res.ok) throw await toApiError(res);
     const body = (await res.json()) as { reused?: boolean; token?: string };
-    if (body.reused && existing) return existing;
+    if (body.reused) return existing ?? "";
     if (body.token) {
       setSessionToken(body.token);
       return body.token;

@@ -43,6 +43,10 @@
 .workspace-steps a:hover, .workspace-steps a[aria-current] { color: var(--primary); border-color: var(--primary); }
 
 .workspace-page { width: 100%; max-width: 90rem; margin-inline: auto; padding: clamp(1rem, 2.8vw, 2.5rem); }
+.workspace-login { display:grid; place-items:center; min-height:100dvh; padding:1rem; background:var(--background); }
+.workspace-login-card { display:grid; width:min(100%, 27rem); gap:1.4rem; padding:clamp(1.25rem, 5vw, 2rem); }
+.workspace-login-brand { display:flex; align-items:center; gap:.65rem; font-weight:700; color:var(--primary); }
+.workspace-login-card h1 { font-size:clamp(1.45rem, 5vw, 1.8rem); font-weight:750; }
 .workspace-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .85rem; margin-bottom: 1.4rem; }
 .workspace-heading h1 { font-size: clamp(1.65rem,2.6vw,2.1rem); line-height: 1.22; letter-spacing: -.035em; font-weight: 760; }
 .workspace-heading p { margin-top: .45rem; color: var(--muted-foreground); font-size: .91rem; }

@@ -18,6 +18,8 @@
 
 本地适配器使用进程内存存储任务和图片。正式站使用 Qoder Sites 私有存储和数据库。
 
+本机可在服务端设置 `EB_WORKSPACE_PASSWORD` 来启用工作台登录，账号为 `EduBridge`。使用 `node web/dev/workspace-login-test.mjs` 从项目根目录运行登录回归。
+
 ## 构建与部署
 
 ```sh
@@ -25,6 +27,10 @@ npm run build
 ```
 
 在 Qoder Sites 中使用 `dist/` 作为网页目录，`functions/` 作为 Function 目录，入口为 `functions/index.ts`。部署依赖既有项目的数据库和私有存储，在站点的服务端 Secret 中配置上表所列环境变量。 `docs/migrations/005_learning_sessions.sql` 是学习会话的增量迁移，依赖既有任务与存储结构。
+
+评委公网演示默认免登录。发布后通过 `/functions/v1/app/api/auth/status` 确认 `required` 为 `false`，再用匿名浏览器打开作品链接确认可直接进入工作台。
+
+需要登录的联调站应设置服务端变量 `EB_WORKSPACE_LOGIN=required` 和 Secret `EB_WORKSPACE_PASSWORD`。站点使用既有的 `MATH_VERIFY_TOKEN` 签发登录会话，登录后沿用当前浏览器原有的任务归属。
 
 函数健康检查路径为 `/functions/v1/app/api/health`。发布后可通过站内自制图片核对识别、人工确认、诊断、审核和复测。前端构建执行 TypeScript 检查，服务端流程回归命令见 [项目说明](../README.md#代码与验证)。
 

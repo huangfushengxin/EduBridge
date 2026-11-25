@@ -21,7 +21,9 @@ async function authorizeReviewer(request: Request) {
 }
 // 单任务联调预算覆盖来自站点环境变量（非密钥配置），默认 12、非法或缺失回退 12。
 const handle = application({ db: createDatabaseClient(), storage: createStorageClient(), BackendError, model, verifyMath, authorizeReviewer,
-  budgetOverrides: parseBudgetOverrides(Deno.env.get('EB_TASK_BUDGET_OVERRIDES')) });
+  budgetOverrides: parseBudgetOverrides(Deno.env.get('EB_TASK_BUDGET_OVERRIDES')),
+  // 登录门由站点环境开关控制：需要登录的站点设置 EB_WORKSPACE_LOGIN=required；公网演示默认关闭，直接打开工作台。
+  login:{required:readEnv('EB_WORKSPACE_LOGIN') === 'required',password:readEnv('EB_WORKSPACE_PASSWORD'),signingKey:readEnv('MATH_VERIFY_TOKEN')} });
 Deno.serve(async request => {
   let context;
   try { context = createSiteContext(request); return await handle(context); }

@@ -20,6 +20,7 @@ if (mockMode) {
 }
 
 const db = makeDb();
+const workspacePassword = readEnv("EB_WORKSPACE_PASSWORD");
 const handle = application({
   db,
   storage: makeStorage(),
@@ -28,6 +29,7 @@ const handle = application({
   verifyMath: mockMode
     ? async (claims) => claims.length ? {status:"passed",code:"mock_math_check"} : {status:"unsupported",code:"no_supported_claim"}
     : createMathVerifier({readEnv}),
+  login:workspacePassword ? {required:true,password:workspacePassword,signingKey:crypto.randomUUID()} : undefined,
 });
 
 http

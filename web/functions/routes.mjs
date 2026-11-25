@@ -41,8 +41,9 @@ import { applyMaterialResult, decodeMaterial, pickMaterial, planForMaterial, pro
 import { learningRoutes } from "./learning-routes.mjs";
 import { modelBudget } from "./model-budget.mjs";
 import { mergeQuestionRows, questionKey, teacherResult } from "./question-merge.mjs";
+import { workspaceLogin } from "./workspace-login.mjs";
 
-export function application({ db, storage, BackendError, model, verifyMath, authorizeReviewer, budgetOverrides = {} }) {
+export function application({ db, storage, BackendError, model, verifyMath, authorizeReviewer, budgetOverrides = {}, login }) {
   const uuid = (v) =>
     typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v);
   const fail = (code, status) => {
@@ -119,15 +120,17 @@ export function application({ db, storage, BackendError, model, verifyMath, auth
     for (const part of header.split(";")) {
       const idx = part.indexOf("=");
       if (idx < 0) continue;
-      if (part.slice(0, idx).trim() === name) return decodeURIComponent(part.slice(idx + 1).trim());
+      if (part.slice(0, idx).trim() === name) return part.slice(idx + 1).trim();
     }
     return null;
   }
 
   // 出示的会话 token → 归属键（SHA-256）。无有效凭据返回 null。
+  const guestToken = (request) =>
+    request.headers.get(SESSION_HEADER) || parseCookie(request.headers.get("cookie"), SESSION_COOKIE);
+
   async function resolveOwner(request) {
-    const token =
-      request.headers.get(SESSION_HEADER) || parseCookie(request.headers.get("cookie"), SESSION_COOKIE);
+    const token = guestToken(request);
     if (!token || !TOKEN_RE.test(token)) return null;
     return sha256Hex(token);
   }
@@ -503,6 +506,7 @@ export function application({ db, storage, BackendError, model, verifyMath, auth
 
   const handleLearning = learningRoutes({ db, fail, rows, requireOwner, ownedTask, currentQuestions,
     input, uuid, budget, model, verifyMath, authorizeReviewer, noStore });
+  const workspaceAccess = workspaceLogin({input,fail,noStore,resolveOwner,...login});
 
   return async (ctx) => {
     const request = ctx.request;
@@ -524,8 +528,7 @@ export function application({ db, storage, BackendError, model, verifyMath, auth
 
     // 签发 / 复用匿名会话凭据。服务端生成不可预测 token，仅以哈希作为归属键。
     if (path === "/api/session" && request.method === "POST") {
-      const existing =
-        request.headers.get(SESSION_HEADER) || parseCookie(request.headers.get("cookie"), SESSION_COOKIE);
+      const existing = guestToken(request);
       if (existing && TOKEN_RE.test(existing)) {
         return Response.json({ ok: true, reused: true }, { headers: noStore });
       }
@@ -540,6 +543,9 @@ export function application({ db, storage, BackendError, model, verifyMath, auth
       const owner = await resolveOwner(request);
       return Response.json({ ok: true, authenticated: !!owner }, { headers: noStore });
     }
+
+    const accessResponse = await workspaceAccess(path,request);
+    if (accessResponse) return accessResponse;
 
     // 创建 / 幂等恢复学习任务（绑定当前会话归属）
     if (path === "/api/tasks" && request.method === "POST") {
