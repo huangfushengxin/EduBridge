@@ -127,7 +127,7 @@ function DemoMaterials() {
         <CardTitle className="flex items-center gap-2 text-base">
           <FlaskConical className="size-4 text-muted-foreground" />
           材料区 · 演示材料（文字版）
-          <Badge variant="outline">固定演示题</Badge>
+          <span className="workspace-source-label">自制演示数据</span>
         </CardTitle>
         <CardDescription>本模式只展示与该演示题对应的材料，不混入你上传的图片。</CardDescription>
       </CardHeader>
@@ -318,24 +318,24 @@ export default function ConfirmPage() {
   const sourceLabel = mode === "demo" ? "演示数据" : "人工录入";
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-10 sm:px-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">核对识别结果</h1>
-        <p className="mt-2 text-base text-muted-foreground">对照原图检查题干、作答和老师批改。确认错题后即可开始诊断。</p>
-      </div>
+    <div className="workspace-flow-page">
+      <div className="workspace-heading"><div>
+        <h1>核对识别结果</h1>
+        <p>对照原图检查题干、作答和老师批改。确认错题后即可开始诊断。</p>
+      </div></div>
 
       <div
         role="tablist"
         aria-label="确认模式"
-        className="inline-flex w-fit max-w-full flex-wrap rounded-lg border border-border bg-muted p-1"
+        className="inline-flex w-fit max-w-full flex-wrap gap-1 rounded-xl border border-border bg-card p-1"
       >
         <button
           type="button"
           role="tab"
           aria-selected={mode === "demo"}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+          className={`flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
             mode === "demo"
-              ? "bg-background font-medium text-foreground shadow-sm"
+              ? "bg-accent font-semibold text-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
           onClick={() => setMode("demo")}
@@ -347,9 +347,9 @@ export default function ConfirmPage() {
           type="button"
           role="tab"
           aria-selected={mode === "custom"}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+          className={`flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
             mode === "custom"
-              ? "bg-background font-medium text-foreground shadow-sm"
+              ? "bg-accent font-semibold text-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
           onClick={() => setMode("custom")}
@@ -370,7 +370,8 @@ export default function ConfirmPage() {
       ) : null}
 
       {mode === "demo" ? (
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="workspace-confirm-split">
+        <DemoMaterials />
         <Card>
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center gap-2 text-base">
@@ -517,8 +518,6 @@ export default function ConfirmPage() {
             </p>
           </CardContent>
         </Card>
-
-        <DemoMaterials />
       </div>
       ) : (
         <RecognitionPanel />

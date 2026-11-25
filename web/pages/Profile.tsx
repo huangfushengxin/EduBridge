@@ -60,8 +60,8 @@ export default function ProfilePage() {
     setNickname(name);
   }
 
-  return <div className="workspace-page">
-    <div className="workspace-heading"><div><h1>个人中心</h1><p>设置昵称，让宠物陪你复习。</p></div></div>
+  return <div className="workspace-page space-y-5">
+    <div className="workspace-heading"><div><h1>个人中心</h1><p>设置昵称、选择学习伙伴并查看成长进度。</p></div></div>
     <div className="workspace-profile">
       <section className="workspace-panel" aria-labelledby="profile-title">
         <div className="workspace-panel-heading"><h2 id="profile-title">个人资料</h2><UserRound size={18} aria-hidden="true" /></div>

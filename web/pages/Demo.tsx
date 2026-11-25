@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
-import { FlaskConical, PenLine } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FlaskConical, Images, Loader2, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,28 +52,32 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6">
-      <div>
-        <div className="flex items-center gap-2">
-          <FlaskConical className="size-5 text-muted-foreground" />
-          <h1 className="text-2xl font-semibold tracking-tight">演示样例</h1>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          选择自制图片跑一遍完整流程，或先阅读固定题目的批改与参考答案。
-        </p>
-      </div>
-
-      <Alert>
-        <AlertTitle>用自制样例体验完整流程</AlertTitle>
-        <AlertDescription>
-          原卷与答题卡均为自制。点击后将创建独立任务并载入图片，进入确认页后可手动开始真实识别。
-        </AlertDescription>
-      </Alert>
-      <div className="flex flex-wrap gap-3">
-        <Button disabled={busy} onClick={() => void startSample()}>
-          {busy ? "正在载入图片…" : "使用自制图片开始"}
-        </Button>
-        <Button variant="outline" onClick={() => navigate("/confirm?mode=demo")}>体验固定题人工确认</Button>
+    <div className="workspace-flow-page">
+      <div className="workspace-heading"><div>
+        <h1>演示样例</h1>
+        <p>选择自制图片体验流程，或核对固定题的题干、作答与老师批改。</p>
+      </div><span className="workspace-source-label">自制演示数据</span></div>
+      <div className="workspace-demo-grid">
+        <Card aria-busy={busy}>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Images className="size-5 text-primary" aria-hidden="true" />自制原卷与答题卡</CardTitle>
+            <CardDescription>载入图片会创建独立任务。到确认页后，点击「开始识别」才会调用模型。</CardDescription></CardHeader>
+          <CardContent className="grid gap-3">
+            <div className="grid grid-cols-2 gap-2 rounded-xl border bg-muted p-2">
+              {sampleFiles.map(({path,kind}) => <img key={kind} src={import.meta.env.BASE_URL + path} alt={kind === "paper" ? "自制样例原卷" : "自制样例答题卡"} className="aspect-[4/3] w-full rounded-lg bg-white object-contain" />)}
+            </div>
+            <Button className="w-fit" disabled={busy} onClick={() => void startSample()}>
+              {busy && <Loader2 className="animate-spin" aria-hidden="true" />}{busy ? "正在载入图片…" : "使用自制图片开始"}
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><FlaskConical className="size-5 text-primary" aria-hidden="true" />固定题人工确认</CardTitle>
+            <CardDescription>对照已有题目及老师批改，体验逐题人工核对。</CardDescription></CardHeader>
+          <CardContent className="grid gap-3">
+            <p className="rounded-lg bg-muted p-3 text-sm">{DEMO_QUESTION.stem}</p>
+            <Button className="w-fit" variant="outline" onClick={() => navigate("/confirm?mode=demo")}>体验固定题人工确认</Button>
+          </CardContent>
+        </Card>
       </div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 

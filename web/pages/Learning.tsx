@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { BookOpen, ClipboardCheck, FileText, GitBranch, ListChecks, Loader2, ScanSearch, ShieldCheck } from "lucide-react";
 import { LearningPrint, LearningReport } from "@/components/LearningReport";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ const stages: Record<string, string> = {
 const canAdvance = new Set(["diagnose","generate_items","verify_items","review_items","grade","generate_teaching","verify_teaching","review_teaching","verify_retake","review_retake"]);
 const topics: Record<string, string> = {sets:"集合",functions:"函数",basic_inequalities:"基本不等式"};
 const support: Record<string, string> = {supported:"得到支持",not_supported:"暂未得到支持",needs_verification:"待验证"};
-const checks: Record<string, string> = {math_verify:"数学工具",model_review:"独立模型审核",human_review:"人工复核",rule_check:"规则引用"};
+const checks: Record<string, string> = {math_verify:"数学验证",model_review:"独立模型审核",human_review:"人工复核",rule_check:"规则引用"};
 const verdict: Record<string, string> = {
   pass:"通过", revise:"需修改", needs_human_review:"待人工复核", passed:"通过", failed:"未通过",
   unsupported:"未能验证", timeout:"超时", right:"正确", wrong:"错误", partial:"部分正确",
@@ -155,16 +156,16 @@ function LearningTask({taskId}: {taskId:string}) {
 
   return (
     <div className="grid gap-5" aria-busy={pending}>
-      {view?.simulated && <p className="rounded-md bg-amber-100 p-3 text-sm text-amber-950">模拟数据 · 本地测试使用模拟模型和验证结果。</p>}
+      {view?.simulated && <p className="workspace-source-label">模拟数据 · 本地测试使用模拟模型和验证结果。</p>}
       {error && <p role="alert" className="rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p>}
       <Card>
-        <CardHeader><CardTitle>选择已确认错题</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><ClipboardCheck className="size-5 text-primary" aria-hidden="true" />选择已确认错题</CardTitle></CardHeader>
         <CardContent className="grid gap-4">
           {view && <p className="text-sm text-muted-foreground">模型调用 {view.modelCalls}/{view.modelLimit} 次 · 识别、诊断、审核、讲解与复测共用预算。</p>}
           {view?.stale && <p role="status" className="text-sm">原题确认版本已变化。请重新选择已确认题目。</p>}
           {view && !view.configured && <p role="status" className="text-sm">诊断模型暂不可用，请联系站点负责人检查服务端配置。</p>}
           {view && (view.busy || pending) && (
-            <p role="status" className="text-sm">
+            <p role="status" className="workspace-status flex items-center gap-2"><Loader2 className="size-4 shrink-0 animate-spin text-primary" aria-hidden="true" />
               {activeStep ? "正在" + stages[activeStep.stage] + "…" : "正在处理…"}
               {view.busy && !pending && " 页面会自动更新进度。"}
             </p>
@@ -173,14 +174,15 @@ function LearningTask({taskId}: {taskId:string}) {
             <p className="text-sm text-muted-foreground">下方可以点击「继续处理」，从已保存的步骤接着做。</p>
           )}
           {view?.eligibleQuestions.map((q)=>(
-            <label key={q.id} className="flex items-center gap-2 text-sm">
+            <label key={q.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border bg-muted px-3 text-sm">
               <input type="checkbox" checked={chosen.includes(q.id)}
                 disabled={pending || (!chosen.includes(q.id) && chosen.length >= 3)}
                 onChange={(e) => setChosen((list)=>e.target.checked ? [...list,q.id] : list.filter((id)=>id!==q.id))} />
               第 {q.number ?? "未编号"} 题 · 确认版本 {q.version}
             </label>
           ))}
-          {view && view.eligibleQuestions.length === 0 && <p className="text-sm text-muted-foreground">请先在人工确认页的识别结果中，逐题确认至少一道老师已判错的题目。</p>}
+          {!view && !error && <p className="workspace-status" role="status">正在读取任务进度…</p>}
+          {view && view.eligibleQuestions.length === 0 && <p className="rounded-xl border border-dashed bg-muted p-4 text-sm text-muted-foreground">请先在人工确认页的识别结果中，逐题确认至少一道老师已判错的题目。</p>}
           <div className="flex flex-wrap gap-2">
             <Button disabled={pending || !view?.configured || view.busy || !view.eligibleQuestions.some((q)=>chosen.includes(q.id)) || Boolean(view && view.modelCalls>=view.modelLimit)}
               onClick={()=>void perform(()=>startLearning(taskId,view!.eligibleQuestions.filter((q)=>chosen.includes(q.id))),true)}>开始所选错题诊断</Button>
@@ -194,7 +196,7 @@ function LearningTask({taskId}: {taskId:string}) {
       {view?.work.map((work)=>(
         <Card key={work.question.id + "/" + work.question.version}>
           <CardHeader>
-            <CardTitle className="flex flex-wrap items-center gap-2">第 {work.question.number ?? "未编号"} 题 <Badge variant="outline">{work.ruleExerciseRecoveryAvailable ? "诊断题可恢复" : work.stage === "needs_review" && work.error === "schema_invalid" ? "格式校验未通过" : stages[work.stage] ?? work.stage}</Badge></CardTitle>
+            <CardTitle className="flex flex-wrap items-center gap-2 text-lg">第 {work.question.number ?? "未编号"} 题 <Badge variant="outline">{work.ruleExerciseRecoveryAvailable ? "诊断题可恢复" : work.stage === "needs_review" && work.error === "schema_invalid" ? "格式校验未通过" : stages[work.stage] ?? work.stage}</Badge></CardTitle>
           </CardHeader>
           <CardContent className="grid gap-5">
             {work.ruleExerciseRecoveryAvailable && <p role="status" className="text-sm text-muted-foreground">已保存错因报告。可从已有规则题继续，题目会先经过数学验证与独立审核。</p>}
@@ -206,16 +208,16 @@ function LearningTask({taskId}: {taskId:string}) {
             {work.stage === "unsupported_topic" && <p className="text-sm text-muted-foreground">目前支持集合、函数和基本不等式的错因诊断。</p>}
             {work.teacher_review_reason && <div role="status" className="rounded-md border p-3 text-sm">请人工核对批改与解答。<MathText text={work.teacher_review_reason}/></div>}
             {work.diagnosis && (
-              <section className="grid gap-3">
-                <h2 className="font-semibold">错因报告 · {topics[work.diagnosis.knowledge_point]}</h2>
+              <section className="workspace-learning-section">
+                <h2 className="flex items-center gap-2 font-semibold"><ScanSearch className="size-5 shrink-0 text-primary" aria-hidden="true" />错因报告 · {topics[work.diagnosis.knowledge_point]}</h2>
                 {work.diagnosis.first_error_step_id !== null && <p className="text-sm">首个待核对步骤 {work.diagnosis.first_error_step_id+1}</p>}
                 {work.diagnosis.hypotheses.map((h)=>(
-                  <article key={h.hypothesis_id} className="grid gap-2 rounded-md border p-3 text-sm">
+                  <article key={h.hypothesis_id} className="grid min-w-0 gap-3 rounded-xl border bg-card p-4 text-sm">
                     <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{h.category === "insufficient_evidence" ? "证据不足" : support[h.support_status]}</Badge><MathText text={h.statement} /></div>
                     <MathText text={h.applicability} />
                     {h.insufficient_reason && <MathText text={h.insufficient_reason} />}
                     {h.evidence.map((e,i)=>(
-                      <div key={i} className="border-l-2 pl-3">
+                      <div key={i} className="workspace-lesson-evidence">
                         <p className="text-muted-foreground">{e.source_type==="student_step" ? "学生第 " + (Number(e.step_id)+1) + " 步" : "题目条件"}</p>
                         <MathText text={e.snippet} studentWork={e.source_type === "student_step"} />
                       </div>
@@ -225,7 +227,8 @@ function LearningTask({taskId}: {taskId:string}) {
                 ))}
               </section>
             )}
-            {work.items.length > 0 && <h2 className="font-semibold">诊断练习</h2>}
+            {work.items.length > 0 && <section className="workspace-learning-section">
+              <h2 className="flex items-center gap-2 font-semibold"><ListChecks className="size-5 shrink-0 text-primary" aria-hidden="true" />诊断练习</h2>
             {work.stage === "diagnostic_ready" && (
               <p className="text-sm text-muted-foreground">完成诊断练习后生成并审核讲解，再开始变式复测。</p>
             )}
@@ -261,6 +264,7 @@ function LearningTask({taskId}: {taskId:string}) {
                 </>}
               </form>
             ))}
+            </section>}
             {work.stage==="diagnostic_submitted" && work.diagnosis && (
               <Button className="w-fit" disabled={pending || view.busy} onClick={()=>void perform(()=>startTeaching(taskId,work.diagnosis!.diagnosis_id),true)}>生成针对性讲解</Button>
             )}
@@ -288,13 +292,13 @@ function LearningTask({taskId}: {taskId:string}) {
               </div>
             )}
             {work.teaching && (
-              <section className="grid gap-3">
-                <h2 className="font-semibold">针对性讲解</h2>
+              <section className="workspace-learning-section">
+                <h2 className="flex items-center gap-2 font-semibold"><BookOpen className="size-5 shrink-0 text-primary" aria-hidden="true" />针对性讲解</h2>
                 {work.teaching.steps.map((s,index)=>(
                   <details key={index} className="rounded-md border p-3" open={index===0}>
                     <summary className="cursor-pointer font-medium">{index+1}. {s.title}</summary>
                     <div className="mt-3 grid gap-2 text-sm">
-                      {s.original_step && <div className="rounded-md bg-muted p-3"><p className="text-muted-foreground">学生原步骤</p><MathText text={s.original_step} studentWork /></div>}
+                      {s.original_step && <div className="workspace-lesson-evidence"><p className="text-muted-foreground">学生原步骤</p><MathText text={s.original_step} studentWork /></div>}
                       <MathText text={s.text} />
                     </div>
                   </details>
@@ -309,8 +313,8 @@ function LearningTask({taskId}: {taskId:string}) {
               <p className="text-sm text-muted-foreground">本任务的模型额度已用完，复测题尚无法完成独立审核。</p>
             )}
             {work.retake && (
-              <section className="grid gap-3">
-                <h2 className="font-semibold">变式复测</h2>
+              <section className="workspace-learning-section">
+                <h2 className="flex items-center gap-2 font-semibold"><GitBranch className="size-5 shrink-0 text-primary" aria-hidden="true" />变式复测</h2>
                 <form className="grid gap-3 rounded-md border p-4 text-sm" onSubmit={(event)=>{
                   event.preventDefault();
                   const item = work.retake;
@@ -340,8 +344,8 @@ function LearningTask({taskId}: {taskId:string}) {
               <p className="text-sm text-muted-foreground">本题已保存。当前无法再次生成，可以继续处理其他题目。</p>
             )}
             {work.checks.length>0 && (
-              <details className="rounded-md border p-3 text-sm" open={work.stage==="needs_review"}>
-                <summary className="cursor-pointer font-medium">审核与验证记录</summary>
+              <details className="workspace-review-record text-sm" open={work.stage==="needs_review"}>
+                <summary className="cursor-pointer font-semibold"><ShieldCheck className="mr-1 inline size-4 text-primary" aria-hidden="true" />审核与验证记录</summary>
                 <ul className="mt-2 grid gap-3">
                   {work.checks.map((artifact,index)=>(
                     <li key={artifact.artifact_id}>
@@ -370,11 +374,15 @@ export default function LearningPage() {
   const {activeTaskId, sessionStatus} = useUploads();
   const taskId = query.get("task") || activeTaskId;
   return (
-    <div className="mx-auto grid w-full max-w-4xl gap-5 px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-semibold">错因诊断与讲解</h1>
+    <div className="workspace-flow-page workspace-learning-page">
+      <div className="workspace-heading"><div><h1>错因诊断与讲解</h1><p>围绕已确认的学生步骤查看证据，完成练习、讲解和变式复测。</p></div></div>
       {sessionStatus==="ready" && taskId
         ? <LearningTask key={taskId} taskId={taskId}/>
-        : <p className="text-sm text-muted-foreground">{sessionStatus==="loading" ? "正在恢复任务…" : "请先在上传页选择任务。"} <Link to="/upload" className="underline">前往上传页</Link></p>}
+        : <Card><CardContent className="grid justify-items-start gap-3">
+          <FileText className="size-5 text-primary" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground" role="status">{sessionStatus==="loading" ? "正在恢复任务…" : "请先在上传页选择任务。"}</p>
+          <Button asChild variant="outline"><Link to="/upload">前往上传页</Link></Button>
+        </CardContent></Card>}
     </div>
   );
 }

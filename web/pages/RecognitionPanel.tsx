@@ -8,14 +8,16 @@ import { Link } from "@/lib/router";
  * - 模型原始草稿（draft）与人工修订（human）分别保存；老师批改不自动判对错。
  * - 保留"人工录入回退"（不依赖识别，走任务级确认接口）。
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
   Eraser,
   Images,
   Info,
   Loader2,
+  Minus,
   PenLine,
+  Plus,
   Play,
   RefreshCw,
   Save,
@@ -449,10 +451,50 @@ function ManualFallback({ taskId }: { taskId: string | null }) {
 
 /* ---------- 识别驱动确认面板 ---------- */
 
+function OriginalMaterials({ paper, sheet }: { paper: FileItem[]; sheet: FileItem[] }) {
+  const [selected, setSelected] = useState("");
+  const [zoom, setZoom] = useState(100);
+  const pages = [
+    ...paper.map((file, index) => ({ file, label: "原卷第 " + (index + 1) + " 页" })),
+    ...sheet.map((file, index) => ({ file, label: "答题卡第 " + (index + 1) + " 页" })),
+  ];
+  const current = pages.find(({ file }) => file.id === selected) ?? pages[0];
+  return <Card className="workspace-materials">
+    <CardHeader>
+      <CardTitle className="flex flex-wrap items-center gap-2 text-lg"><Images className="size-5 text-primary" aria-hidden="true" />你上传的材料
+        <Badge variant="outline">仅本人会话可见</Badge></CardTitle>
+      <CardDescription>已私有保存到服务端。可按原卷或答题卡页码切换，查看未经裁切的原图。</CardDescription>
+    </CardHeader>
+    <CardContent className="grid gap-3">
+      {current ? <>
+        <div className="workspace-material-controls">
+          <select aria-label="选择原图页码" value={current.file.id} onChange={(event) => {
+            setSelected(event.target.value);
+            setZoom(100);
+          }}>
+            {pages.map(({file,label}) => <option key={file.id} value={file.id}>{label}</option>)}
+          </select>
+          <div className="flex items-center gap-1.5" role="group" aria-label="原图缩放">
+            <Button type="button" size="icon-sm" variant="outline" aria-label="缩小原图" disabled={!current.file.url || zoom <= 75}
+              onClick={() => setZoom(zoom - 25)}><Minus /></Button>
+            <span className="min-w-10 text-center text-sm tabular-nums">{zoom}%</span>
+            <Button type="button" size="icon-sm" variant="outline" aria-label="放大原图" disabled={!current.file.url || zoom >= 200}
+              onClick={() => setZoom(zoom + 25)}><Plus /></Button>
+          </div>
+        </div>
+        <div className="workspace-original" tabIndex={0} role="region" aria-label="未经裁切的原图">
+          {current.file.url ? <img src={current.file.url} style={{width: zoom + "%"}} alt={current.label} />
+            : <p className="p-4 text-sm text-muted-foreground" role="status">预览加载中…</p>}
+        </div>
+      </> : <p className="rounded-xl border border-dashed bg-muted p-4 text-sm text-muted-foreground">
+        尚未上传原卷与答题卡。你仍可手动录入题目内容。</p>}
+    </CardContent>
+  </Card>;
+}
+
 export default function RecognitionPanel() {
   const { activeTaskId, activeTask, paper, sheet } = useUploads();
   const recognition = useRecognition(activeTaskId);
-  const assets = useMemo(() => [...paper, ...sheet], [paper, sheet]);
   const hasMaterials = paper.length > 0 || sheet.length > 0;
 
   const { loading, recognizing, configured, simulated, previousEdits, error } = recognition;
@@ -476,14 +518,14 @@ export default function RecognitionPanel() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
+      <Card aria-busy={recognizing}>
         <CardHeader>
-          <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-            <ScanLine className="size-4 text-muted-foreground" />
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+            <ScanLine className="size-5 text-primary" aria-hidden="true" />
             图片识别
             {simulated && !simulationBlocked && <Badge variant="outline">模拟识别 · 自制样例</Badge>}
             {activeTask?.kind === "demo" && <Badge variant="outline">自制样例</Badge>}
-            <Badge variant="outline">{jobStatusText()}</Badge>
+            <span role="status"><Badge variant="outline">{jobStatusText()}</Badge></span>
             {questions.length > 0 && (
               <Badge variant="outline">
                 {confirmedCount}/{questions.length} 题已确认
@@ -541,7 +583,7 @@ export default function RecognitionPanel() {
           )}
 
           {job?.materials && job.materials.length > 0 && (
-            <ul className="grid gap-2 rounded-lg border border-border p-3 text-sm" aria-label="逐页识别进度">
+            <ul className="grid gap-2 rounded-xl border border-border bg-muted p-3 text-sm" aria-label="逐页识别进度">
               {job.materials.map((page) => (
                 <li key={page.assetId} className="flex flex-wrap items-center justify-between gap-2">
                   <span>{page.kind === "paper" ? "原卷" : "答题卡"}第 {page.pageIndex + 1} 页</span>
@@ -588,70 +630,25 @@ export default function RecognitionPanel() {
         </CardContent>
       </Card>
 
-      {/* 材料区（可回看原图） */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Images className="size-4 text-muted-foreground" />
-            你上传的材料
-            <Badge variant="outline">仅本人会话可见</Badge>
-          </CardTitle>
-          <CardDescription>已私有保存到服务端 · 识别不会自动触发</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {!hasMaterials ? (
-            <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-              尚未上传原卷与答题卡。仍可手动录入题目内容，但材料区没有可核对的原图。
-            </p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {([["原卷", paper], ["答题卡", sheet]] as const).map(([title, items]) =>
-                items.length > 0 ? (
-                  <div key={title}>
-                    <p className="mb-2 text-sm font-medium">{title}（{items.length} 张）</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {items.map((file, index) =>
-                        file.url ? (
-                          <img key={file.id} src={file.url} alt={`${title}第 ${index + 1} 页`} className="aspect-[3/4] w-full rounded-md border border-border object-cover" />
-                        ) : (
-                          <div key={file.id} className="flex aspect-[3/4] w-full items-center justify-center rounded-md border border-border text-xs text-muted-foreground">
-                            预览加载中…
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                ) : null,
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 逐题识别确认 */}
-      {questions.length > 0 ? (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold tracking-tight">逐题核对与确认</h2>
-          {questions.map((q) => (
-            <QuestionCard
-              key={q.id}
-              question={q}
-              onSaveRevision={recognition.saveRevision}
-              onConfirm={recognition.confirm}
-            />
-          ))}
+      <div className="workspace-confirm-split">
+        <OriginalMaterials paper={paper} sheet={sheet} />
+        <div className="workspace-recognition-results grid gap-4">
+          {questions.length > 0 ? <>
+            <h2 className="text-lg font-semibold">逐题核对与确认</h2>
+            {questions.map((question) => <QuestionCard key={question.id} question={question}
+              onSaveRevision={recognition.saveRevision} onConfirm={recognition.confirm} />)}
+          </> : <Card>
+            <CardHeader><CardTitle className="text-lg">逐题核对与确认</CardTitle></CardHeader>
+            <CardContent>
+              <p className="rounded-xl border border-dashed bg-muted p-4 text-sm text-muted-foreground" role="status">
+                {loading || recognizing ? "正在读取可核对的题目…" :
+                  configured && job?.status === "succeeded" ? "未识别到题目。请核对原图，或使用下方人工录入回退。" :
+                    "题干、学生作答与老师批改会在识别后显示。也可使用下方人工录入。"}
+              </p>
+            </CardContent>
+          </Card>}
         </div>
-      ) : (
-        !loading && configured && job?.status === "succeeded" && (
-          <Alert>
-            <Info />
-            <AlertTitle>未识别到题目</AlertTitle>
-            <AlertDescription>
-              模型未转录到可识别的题目（可能图片模糊、空白或无有效内容）。请核对原图，或使用下方人工录入回退。
-            </AlertDescription>
-          </Alert>
-        )
-      )}
+      </div>
 
       {previousEdits.length > 0 && (
         <details className="rounded-lg border border-border p-4">

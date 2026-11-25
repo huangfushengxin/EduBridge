@@ -8,9 +8,9 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
+        default: "border-[var(--accent-border)] bg-accent text-accent-foreground",
         destructive:
-          "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 [&>svg]:text-current",
+          "border-destructive/30 bg-destructive/5 text-destructive *:data-[slot=alert-description]:text-destructive [&>svg]:text-current",
       },
     },
     defaultVariants: {
@@ -27,7 +27,7 @@ function Alert({
   return (
     <div
       data-slot="alert"
-      role="alert"
+      role={variant === "destructive" ? "alert" : "status"}
       className={cn(alertVariants({ variant }), className)}
       {...props}
     />
@@ -39,7 +39,7 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert-title"
       className={cn(
-        "col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight",
+        "col-start-2 min-h-4 font-semibold tracking-tight",
         className
       )}
       {...props}

@@ -1,4 +1,5 @@
-import { ClipboardCheck, FileImage, GraduationCap } from "lucide-react";
+import { ClipboardCheck, FileImage, GraduationCap, UploadCloud } from "lucide-react";
+import { PaperIllustration } from "@/components/PaperIllustration";
 import { MathText } from "@/components/MathText";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/lib/router";
@@ -11,25 +12,36 @@ const steps = [
 
 export default function HomePage() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-12">
-      <section className="grid items-center gap-9 rounded-3xl border border-border bg-card p-6 sm:p-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-14">
-        <div className="space-y-5">
-          <p className="text-sm font-semibold text-primary">高一数学 · 错题诊断</p>
-          <h1 className="text-4xl font-semibold leading-[1.16] tracking-tight sm:text-5xl lg:text-6xl">
+    <div className="workspace-page space-y-5">
+      <section className="workspace-hero workspace-hero-intro">
+        <div className="workspace-hero-copy">
+          <p className="workspace-eyebrow"><GraduationCap size={17} aria-hidden="true" />高一数学错题诊断</p>
+          <h1>
             找到出错的那一步
           </h1>
           <p className="max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">
             从老师批改过的试卷出发，在原作答里找证据。完成一道针对性练习，再用变式题检验这次复习。
           </p>
           <div className="flex flex-wrap gap-3 pt-1">
-            <Button asChild size="lg"><Link to="/upload">开始上传</Link></Button>
+            <Button asChild size="lg"><Link to="/upload"><UploadCloud />开始上传</Link></Button>
             <Button asChild size="lg" variant="outline"><Link to="/demo">查看演示</Link></Button>
           </div>
         </div>
-        <div className="rounded-2xl bg-primary p-5 text-primary-foreground sm:p-7">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-current/20 pb-4">
+        <PaperIllustration />
+      </section>
+      <div className="workspace-bento">
+        <section aria-label="学习流程" className="workspace-panel workspace-feature-list">
+          {steps.map(({icon: Icon, title, text}) => (
+            <div key={title} className="flex items-start gap-3">
+              <span className="workspace-metric-icon"><Icon className="size-5" aria-hidden="true" /></span>
+              <div className="space-y-1"><h2 className="font-semibold">{title}</h2><p className="text-sm leading-6 text-muted-foreground">{text}</p></div>
+            </div>
+          ))}
+        </section>
+        <section className="workspace-panel workspace-example">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
             <h2 className="text-lg font-semibold">一次错因核对</h2>
-            <p className="text-sm">演示样例</p>
+            <p className="workspace-source-label">自制演示样例</p>
           </div>
           <dl className="mt-4 grid gap-4 text-sm">
             <div>
@@ -45,21 +57,8 @@ export default function HomePage() {
               <dd><MathText text="可能遗漏了取等点必须在题设范围内的条件。" /></dd>
             </div>
           </dl>
-        </div>
-      </section>
-      <section aria-label="学习流程" className="mt-7 grid gap-5 rounded-2xl border border-border bg-card p-6 md:grid-cols-3 md:gap-8 sm:px-8">
-        {steps.map(({icon: Icon, title, text}) => (
-          <div key={title} className="flex items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary">
-              <Icon className="size-5" aria-hidden="true" />
-            </span>
-            <div className="space-y-1">
-              <h2 className="font-semibold">{title}</h2>
-              <p className="text-sm leading-6 text-muted-foreground">{text}</p>
-            </div>
-          </div>
-        ))}
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

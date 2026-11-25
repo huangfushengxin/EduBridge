@@ -105,8 +105,8 @@ function UploadZone({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg"><FileImage className="size-5 text-primary" aria-hidden="true" />
             {title}
             <span className="ml-2 text-sm font-normal text-muted-foreground">
               已保存 {items.length} 张
@@ -130,10 +130,10 @@ function UploadZone({
           type="button"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
-          className="flex flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border px-4 py-8 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-input bg-muted px-4 py-8 text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {busy || uploading ? <Loader2 className="size-6 animate-spin" /> : <ImagePlus className="size-6" />}
-          <span className="text-sm">
+          <span className="workspace-metric-icon">{busy || uploading ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : <ImagePlus className="size-5" aria-hidden="true" />}</span>
+          <span className="text-sm font-semibold" aria-live="polite">
             {uploading ? "正在上传并保存到服务端…" : "点击选择图片（可多选、分页上传）"}
           </span>
           <span className="text-xs">JPEG / PNG / WebP · 单张不超过 10,000,000 字节</span>
@@ -479,12 +479,11 @@ export default function UploadPage({ library = false }: { library?: boolean }) {
   const hasImages = paper.length >= 1 || sheet.length >= 1;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-10">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{library ? "学习任务" : "上传试卷与答题卡"}</h1>
-        <p className="mt-2 text-base text-muted-foreground">
-          {library ? "按任务保存原卷和老师已批改的答题卡。" : "分别上传清晰的原卷和老师已批改的答题卡。"}
-        </p>
+    <div className="workspace-flow-page">
+      <div className="workspace-heading">
+        <div><h1>{library ? "学习任务" : "上传试卷与答题卡"}</h1>
+          <p>{library ? "查看已保存的原卷、答题卡与诊断进度。" : "分别上传清晰的原卷和老师已批改的答题卡。"}</p></div>
+        {library && <Button onClick={() => navigate("/upload")}><ImagePlus />添加材料</Button>}
       </div>
 
       {sessionStatus === "error" ? (
@@ -522,10 +521,10 @@ export default function UploadPage({ library = false }: { library?: boolean }) {
         </Alert>
       )}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
+      <div className={`workspace-upload-grid ${library ? "is-library" : ""}`}>
         <aside aria-label="学习任务"><TaskBar library={library} /></aside>
         {library ? <BatchUpload key={activeTaskId} /> : <div className="grid min-w-0 gap-4">
-          <div className="grid items-start gap-4 xl:grid-cols-2">
+          <div className="workspace-upload-columns">
             <UploadZone
               kind="paper"
               title="原卷"
@@ -537,7 +536,7 @@ export default function UploadPage({ library = false }: { library?: boolean }) {
               description="上传含学生作答和老师批改标记的图片。"
             />
           </div>
-          <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="workspace-panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between" aria-busy={uploading}>
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <FileImage className="mt-0.5 size-4 shrink-0" />
               <p>

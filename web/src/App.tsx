@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowUpRight, ChartNoAxesCombined, ClipboardCheck, FolderOpen, GraduationCap, UserRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { BookOpen, ChartNoAxesCombined, ChevronRight, ClipboardCheck, FolderOpen, GraduationCap, LayoutGrid, Loader2, UserRound } from "lucide-react";
 import { ApiError, describeError, readWorkspaceAccess, signOutWorkspace, type WorkspaceAccess } from "@/lib/api";
 import { Link, RouterProvider, useRouter } from "@/lib/router";
 import { UploadProvider } from "@/lib/store";
@@ -28,8 +28,20 @@ function Shell({logout}: {logout?:()=>void}) {
   const active = nav.find(({paths})=>paths.includes(path));
   const currentStep = stages.find(({path:stepPath})=>stepPath===path);
   const hasRoute = !!active || path === "/demo" || path === "/home";
+  const content = useRef<HTMLElement>(null);
+  const lastPath = useRef(path);
+
+  useEffect(() => {
+    if (lastPath.current === path) return;
+    lastPath.current = path;
+    content.current?.focus({ preventScroll: true });
+  }, [path]);
 
   return <div className="workspace-shell">
+    <a href="#workspace-content" className="workspace-skip" onClick={(event) => {
+      event.preventDefault();
+      content.current?.focus();
+    }}>跳到主要内容</a>
     <aside className="workspace-sidebar">
       <Link to="/" className="workspace-brand" aria-label="EduBridge AI 首页">
         <span className="workspace-logo"><GraduationCap size={22} aria-hidden="true" /></span><span>EduBridge AI</span>
@@ -39,20 +51,21 @@ function Shell({logout}: {logout?:()=>void}) {
           <Icon size={19} aria-hidden="true" /><span>{label}</span>
         </Link>)}
       </nav>
+      <Link to="/home" className="workspace-about" aria-current={path === "/home" ? "page" : undefined}><BookOpen size={19} aria-hidden="true" />项目介绍</Link>
     </aside>
 
     <div className="workspace-main">
       <header className="workspace-top">
-        <div><span>学习工作台</span><span aria-hidden="true">/</span><strong>{active?.label ?? (path === "/demo" ? "演示样例" : "项目介绍")}</strong></div>
+        <div className="workspace-crumb"><LayoutGrid size={16} aria-hidden="true" /><Link to="/">学习工作台</Link><ChevronRight size={14} aria-hidden="true" /><strong>{currentStep?.label ?? (path === "/" || path === "/statistics" ? "学习概况" : active?.label ?? (path === "/demo" ? "演示样例" : path === "/home" ? "项目介绍" : "页面不存在"))}</strong></div>
         <div>
-          <Link to="/demo" className="workspace-demo-link">演示样例 <ArrowUpRight size={15} aria-hidden="true" /></Link>
+          <Link to="/demo" className="workspace-demo-link" aria-current={path === "/demo" ? "page" : undefined}>演示样例</Link>
           {logout && <button type="button" className="workspace-demo-link" onClick={logout}>退出登录</button>}
         </div>
       </header>
-      <main id="workspace-content" className="min-w-0 flex-1">
+      <main id="workspace-content" ref={content} tabIndex={-1} className="min-w-0 flex-1">
         {currentStep && <nav className="workspace-steps" aria-label="诊断流程">
           {stages.map(({path:stepPath,to,label},index)=><Link key={to} to={stepPath === "/learning" && query.has("task") ? `${to}?task=${encodeURIComponent(query.get("task") ?? "")}` : to}
-            aria-current={path===stepPath ? "step" : undefined}><span>{index+1}</span>{label}</Link>)}
+            aria-current={path===stepPath ? "step" : undefined}><span aria-hidden="true">{index+1}</span>{label}</Link>)}
         </nav>}
         {(path === "/" || path === "/statistics") && <StatisticsPage />}
         {path === "/library" && <UploadPage key="library" library />}
@@ -62,7 +75,7 @@ function Shell({logout}: {logout?:()=>void}) {
         {path === "/demo" && <DemoPage />}
         {path === "/profile" && <ProfilePage />}
         {path === "/home" && <HomePage />}
-        {!hasRoute && <div className="workspace-page"><h1 className="text-xl font-semibold">页面不存在</h1><Link to="/" className="workspace-text-link">返回工作台</Link></div>}
+        {!hasRoute && <div className="workspace-flow-page"><div className="workspace-heading"><div><h1>页面不存在</h1><p>请从学习工作台选择页面。</p></div></div><Link to="/" className="workspace-demo-link w-fit">返回工作台</Link></div>}
       </main>
       <footer className="workspace-footer"><Link to="/home">EduBridge AI · 2026 Qoder 高校创造力大赛</Link><span>公开演示使用自制或脱敏样例。</span></footer>
     </div>
@@ -98,7 +111,7 @@ export default function App() {
 
   if (!access) return <main className="workspace-login">
     <div className="workspace-login-card workspace-panel" role="status">
-      {error || "正在检查登录状态…"}
+      <p className="flex items-center gap-3">{!error && <Loader2 className="size-5 animate-spin text-primary" aria-hidden="true" />}{error || "正在检查登录状态…"}</p>
       {error && <button type="button" className="workspace-demo-link" onClick={()=>void refreshAccess().catch((err)=>setError(describeError(err)))}>重试</button>}
     </div>
   </main>;

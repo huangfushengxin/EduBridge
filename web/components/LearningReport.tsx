@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FileCheck2, History, Printer } from "lucide-react";
 import { createPortal, flushSync } from "react-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,9 +32,9 @@ function ReportRows({ questions, stages, topics }: {
   return (
     <ul className="grid gap-2">
       {questions.map((q) => (
-        <li key={q.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border p-3 text-sm">
-          <span className="font-medium">第 {q.number ?? "未编号"} 题</span>
-          <Badge variant="outline">{statusLabels[q.status]}</Badge>
+        <li key={q.id} className="workspace-report-row text-sm">
+          <strong>第 {q.number ?? "未编号"} 题</strong>
+          <Badge className="w-fit" variant="outline">复测 · {statusLabels[q.status]}</Badge>
           <span className="text-muted-foreground">确认版本 {q.version}{q.topic && topics[q.topic] ? " · " + topics[q.topic] : ""}</span>
           <span className="text-muted-foreground">{q.completedAt ? "完成于 " + dateTime(q.completedAt) : stages[q.stage]}</span>
           {q.diagnosticResults && q.diagnosticResults.length > 0 && (
@@ -57,7 +58,7 @@ export function LearningReport({ report, stages, topics }: {
 }) {
   return (
     <Card>
-      <CardHeader><CardTitle>学习报告</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><FileCheck2 className="size-5 text-primary" aria-hidden="true" />学习报告</CardTitle></CardHeader>
       <CardContent className="grid gap-4">
         <p className="text-sm text-muted-foreground">
           开始于 {dateTime(report.startedAt)} · 复测结论只反映本次作答。
@@ -66,9 +67,10 @@ export function LearningReport({ report, stages, topics }: {
           <p className="text-sm text-muted-foreground">还有题目在进行中。完成变式复测后，这里会显示本次结论。</p>
         )}
         {report.stale && <p role="status" className="text-sm">原题的确认版本有变化，以下是此前版本的记录。</p>}
-        <ReportRows questions={report.questions} stages={stages} topics={topics}/>
-        {report.history.length > 0 && <details>
-          <summary className="cursor-pointer font-medium">历史批次（{report.history.length}）</summary>
+        <div className={`workspace-report-layout ${report.history.length ? "has-history" : ""}`}>
+          <section aria-label="本次诊断与复测"><ReportRows questions={report.questions} stages={stages} topics={topics}/></section>
+        {report.history.length > 0 && <details className="workspace-report-history">
+          <summary className="cursor-pointer font-semibold"><History className="mr-1 inline size-4 text-primary" aria-hidden="true" />历史批次（{report.history.length}）</summary>
           <div className="mt-3 grid gap-3">
             {report.history.map((entry, index) => (
               <div key={entry.retiredAt + "/" + index} className="grid gap-2">
@@ -78,6 +80,7 @@ export function LearningReport({ report, stages, topics }: {
             ))}
           </div>
         </details>}
+        </div>
       </CardContent>
     </Card>
   );
@@ -105,7 +108,7 @@ export function LearningPrint({ work, simulated }: { work: LearningView["work"];
   return (
     <>
       <div className="flex flex-wrap gap-2" aria-label="练习打印">
-        <Button variant="outline" onClick={() => print("questions")}>打印题目</Button>
+        <Button variant="outline" onClick={() => print("questions")}><Printer aria-hidden="true" />打印题目</Button>
         <Button variant="outline" disabled={!answered.length} onClick={() => print("answers")}>打印已作答的答案</Button>
       </div>
       {mode && createPortal(
